@@ -1,6 +1,8 @@
 Revision history for Package-Stash
 
 {{$NEXT}}
+
+0.14-TRIAL  2010-11-14
       - complete rewrite in C, for speed (this includes the vivification
         changes from earlier). should be entirely backwards compatible
         otherwise (in terms of documented api anyway).
