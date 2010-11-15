@@ -338,7 +338,7 @@ SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
     }
 }
 
-MODULE = Package::Stash  PACKAGE = Package::Stash
+MODULE = Package::Stash::XS  PACKAGE = Package::Stash::XS
 
 PROTOTYPES: DISABLE
 

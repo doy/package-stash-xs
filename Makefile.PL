@@ -6,5 +6,5 @@ use ExtUtils::MakeMaker;
 # dependencies, is generated later by Dist::Zilla
 
 WriteMakefile(
-    NAME => 'Package::Stash',
+    NAME => 'Package::Stash::XS',
 );
