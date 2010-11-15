@@ -5,6 +5,8 @@ use warnings;
 
 use Package::Stash::XS;
 
+our $IMPLEMENTATION = 'XS';
+
 BEGIN {
     my $ps = Package::Stash::XS->new(__PACKAGE__);
     my $ps_xs = Package::Stash::XS->new('Package::Stash::XS');
