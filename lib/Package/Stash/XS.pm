@@ -28,9 +28,10 @@ installed, and should be preferred in all environments with a compiler.
 
 =over 4
 
-=item * On perl versions prior to 5.10, undefined package scalars will not show up as existing, due to shortcomings within perl.
+=item * Prior to perl 5.10, scalar slots are only considered to exist if they are defined
 
-=item * GLOB and FORMAT variables are not (yet) accessible through this module.
+This is due to a shortcoming within perl itself. See 
+L<perlref/Making References> point 7 for more information.
 
 =back
 
