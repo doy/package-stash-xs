@@ -153,7 +153,7 @@ vartype_t string_to_vartype(char *vartype)
         return VAR_IO;
     }
     else {
-        croak("Type must be one of 'SCALAR', 'ARRAY', 'HASH', 'CODE', or 'IO'");
+        croak("Type must be one of 'SCALAR', 'ARRAY', 'HASH', 'CODE', or 'IO', not '%s'", vartype);
     }
 }
 
