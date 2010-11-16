@@ -30,7 +30,7 @@ installed, and should be preferred in all environments with a compiler.
 
 =item * Prior to perl 5.10, scalar slots are only considered to exist if they are defined
 
-This is due to a shortcoming within perl itself. See 
+This is due to a shortcoming within perl itself. See
 L<perlref/Making References> point 7 for more information.
 
 =back
@@ -83,6 +83,22 @@ Jesse Luehrs <doy at tozt dot net>
 
 Based on code from L<Class::MOP::Package>, by Stevan Little and the Moose
 Cabal.
+
+=begin Pod::Coverage
+
+add_symbol
+get_all_symbols
+get_or_add_symbol
+get_symbol
+has_symbol
+list_all_symbols
+name
+namespace
+new
+remove_glob
+remove_symbol
+
+=end Pod::Coverage
 
 =cut
 
