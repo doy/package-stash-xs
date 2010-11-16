@@ -193,19 +193,18 @@ void _deconstruct_variable_name(SV *variable, varspec_t *varspec)
 void _deconstruct_variable_hash(HV *variable, varspec_t *varspec)
 {
     HE *val;
-    STRLEN len;
 
     val = hv_fetch_ent(variable, name_key, 0, name_hash);
     if (!val)
         croak("The 'name' key is required in variable specs");
 
-    varspec->name = sv_2mortal(newSVhe(val));
+    varspec->name = sv_2mortal(newSVsv(HeVAL(val)));
 
     val = hv_fetch_ent(variable, type_key, 0, type_hash);
     if (!val)
         croak("The 'type' key is required in variable specs");
 
-    varspec->type = string_to_vartype(HePV(val, len));
+    varspec->type = string_to_vartype(SvPV_nolen(HeVAL(val)));
 }
 
 int _valid_for_type(SV *value, vartype_t type)
