@@ -1,6 +1,8 @@
 Revision history for Package-Stash
 
 {{$NEXT}}
+      - split the XS implementation out into its own dist, which will be used
+        as a backend for Package::Stash if possible
 
 0.14-TRIAL  2010-11-14
       - complete rewrite in C, for speed (this includes the vivification
