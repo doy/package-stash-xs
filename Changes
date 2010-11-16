@@ -1,6 +1,8 @@
 Revision history for Package-Stash
 
 {{$NEXT}}
+
+0.17  2010-11-16
       - bah, get rid of extra junk in the tarball
 
 0.16-TRIAL  2010-11-16
