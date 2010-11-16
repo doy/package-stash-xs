@@ -2,6 +2,10 @@ Revision history for Package-Stash
 
 {{$NEXT}}
 
+0.16-TRIAL  2010-11-16
+      - fix some issues in the undocumented-but-still-maybe-used-some-places
+        hashref api - if you don't know what this is, good!
+
 0.15-TRIAL  2010-11-16
       - split the XS implementation out into its own dist, which will be used
         as a backend for Package::Stash if possible
