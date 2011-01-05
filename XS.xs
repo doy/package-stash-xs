@@ -213,11 +213,7 @@ int _valid_for_type(SV *value, vartype_t type)
 
     switch (type) {
     case VAR_SCALAR:
-        return sv_type == SVt_NULL ||
-               sv_type == SVt_IV   ||
-               sv_type == SVt_NV   ||
-               sv_type == SVt_PV   ||
-               sv_type == SVt_RV;
+        return SvROK(value) ? SvOK(SvRV(value)) : SvOK(value);
     case VAR_ARRAY:
         return sv_type == SVt_PVAV;
     case VAR_HASH:

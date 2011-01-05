@@ -1,6 +1,7 @@
 Revision history for Package-Stash
 
 {{$NEXT}}
+      - more correct validity test for scalars (rafl, Roland van Ipenburg)
 
 0.17  2010-11-16
       - bah, get rid of extra junk in the tarball
