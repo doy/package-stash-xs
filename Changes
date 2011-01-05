@@ -1,6 +1,8 @@
 Revision history for Package-Stash
 
 {{$NEXT}}
+
+0.18  2011-01-05
       - more correct validity test for scalars (rafl, Roland van Ipenburg)
 
 0.17  2010-11-16
