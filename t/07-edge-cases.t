@@ -64,4 +64,6 @@ is(exception { $Bar->add_symbol('$foo', \$foo) }, undef,
 is(exception { $Bar->add_symbol('$bar', \$bar) }, undef,
    "can add PVNV values");
 
+use_ok('CompileTime');
+
 done_testing;

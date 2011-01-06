@@ -213,6 +213,10 @@ int _valid_for_type(SV *value, vartype_t type)
 
     switch (type) {
     case VAR_SCALAR:
+        /* XXX: something weird is going on here - apparently values can
+         * be SVt_NULL but also be SvROK (and also, SVt_NULL isn't SvOK) */
+        if (sv_type == SVt_NULL)
+            return 1;
         return SvROK(value) ? SvOK(SvRV(value)) : SvOK(value);
     case VAR_ARRAY:
         return sv_type == SVt_PVAV;
