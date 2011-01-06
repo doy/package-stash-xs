@@ -1,6 +1,8 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+
+0.19  2011-01-05
       - actually fix scalar initial value validity test
 
 0.18  2011-01-05
