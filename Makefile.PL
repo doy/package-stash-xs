@@ -1,9 +1,11 @@
-use ExtUtils::MakeMaker;
+# This module uses Dist::Zilla for development. This Makefile.PL will let you
+# run the tests, but you are encouraged to install Dist::Zilla and the needed
+# plugins if you intend on doing any serious hacking.
 
-# NOTE:
-# this is a very simple Makefile.PL i only use to build the distribution locally
-# while working on it the real Makefile.PL, with all required information like
-# dependencies, is generated later by Dist::Zilla
+use strict;
+use warnings;
+
+use ExtUtils::MakeMaker::Dist::Zilla::Develop;
 
 WriteMakefile(
     NAME => 'Package::Stash::XS',
