@@ -24,6 +24,10 @@
 #define savesvpv(s) savepv(SvPV_nolen(s))
 #endif
 
+#ifndef GvCV_set
+#define GvCV_set(gv, cv) (GvCV(gv) = (CV*)(cv))
+#endif
+
 /* HACK: scalar slots are always populated on perl < 5.10, so treat undef
  * as nonexistent. this is consistent with the previous behavior of the pure
  * perl version of this module (since this is the behavior that perl sees
@@ -68,7 +72,7 @@
 } while (0)
 #define GvSetCV(g,v) do {               \
     SvREFCNT_dec(GvCV(g));              \
-    if ((GvCV(g) = (CV*)(v))) {         \
+    if ((GvCV_set(g, v))) {             \
         GvIMPORTED_CV_on(g);            \
         GvASSUMECV_on(g);               \
     }                                   \
