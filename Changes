@@ -1,6 +1,8 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+      - make the leak tests author-only, since some smokers run release tests
+      - fix some xs forward compat stuff (Dave Mitchell)
 
 0.20  2011-01-11
       - lower perl prereq to 5.8.1 (ribasushi)
