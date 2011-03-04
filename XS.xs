@@ -351,8 +351,6 @@ new(class, package_name)
     SV *package_name
   PREINIT:
     HV *instance;
-    HV *namespace;
-    SV *nsref;
   CODE:
     if (!SvPOK(package_name))
         croak("The constructor argument must be the name of a package");
@@ -363,13 +361,6 @@ new(class, package_name)
         SvREFCNT_dec(package_name);
         SvREFCNT_dec(instance);
         croak("Couldn't initialize the 'name' key, hv_store failed");
-    }
-    namespace = gv_stashpv(SvPV_nolen(package_name), GV_ADD);
-    nsref = newRV_inc((SV*)namespace);
-    if (!hv_store(instance, "namespace", 9, nsref, 0)) {
-        SvREFCNT_dec(nsref);
-        SvREFCNT_dec(instance);
-        croak("Couldn't initialize the 'namespace' key, hv_store failed");
     }
 
     RETVAL = sv_bless(newRV_noinc((SV*)instance), gv_stashsv(class, 0));
@@ -398,7 +389,24 @@ namespace(self)
     if (!sv_isobject(self))
         croak("Can't call namespace as a class method");
     slot = hv_fetch_ent((HV*)SvRV(self), namespace_key, 0, namespace_hash);
-    RETVAL = slot ? SvREFCNT_inc_simple_NN(HeVAL(slot)) : &PL_sv_undef;
+    if (slot) {
+        RETVAL = SvREFCNT_inc_simple_NN(HeVAL(slot));
+    }
+    else {
+        HV *namespace;
+        SV *nsref, *package_name;
+
+        package_name = _get_name(self);
+        namespace = gv_stashpv(SvPV_nolen(package_name), GV_ADD);
+        nsref = newRV_inc((SV*)namespace);
+        sv_rvweaken(nsref);
+        if (!hv_store((HV*)SvRV(self), "namespace", 9, nsref, 0)) {
+            SvREFCNT_dec(nsref);
+            SvREFCNT_dec(self);
+            croak("Couldn't initialize the 'namespace' key, hv_store failed");
+        }
+        RETVAL = SvREFCNT_inc_simple_NN(nsref);
+    }
   OUTPUT:
     RETVAL
 
