@@ -385,16 +385,21 @@ namespace(self)
     SV *self
   PREINIT:
     HE *slot;
+    SV *package_name;
   CODE:
     if (!sv_isobject(self))
         croak("Can't call namespace as a class method");
+#if PERL_VERSION < 10
+    package_name = _get_name(self);
+    RETVAL = newRV_inc((SV*)gv_stashpv(SvPV_nolen(package_name), GV_ADD));
+#else
     slot = hv_fetch_ent((HV*)SvRV(self), namespace_key, 0, namespace_hash);
     if (slot) {
         RETVAL = SvREFCNT_inc_simple_NN(HeVAL(slot));
     }
     else {
         HV *namespace;
-        SV *nsref, *package_name;
+        SV *nsref;
 
         package_name = _get_name(self);
         namespace = gv_stashpv(SvPV_nolen(package_name), GV_ADD);
@@ -407,6 +412,7 @@ namespace(self)
         }
         RETVAL = SvREFCNT_inc_simple_NN(nsref);
     }
+#endif
   OUTPUT:
     RETVAL
 
