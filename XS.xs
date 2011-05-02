@@ -103,7 +103,7 @@ typedef struct {
 static U32 name_hash, namespace_hash, type_hash;
 static SV *name_key, *namespace_key, *type_key;
 
-const char *vartype_to_string(vartype_t type)
+static const char *vartype_to_string(vartype_t type)
 {
     switch (type) {
     case VAR_SCALAR:
@@ -121,7 +121,7 @@ const char *vartype_to_string(vartype_t type)
     }
 }
 
-I32 vartype_to_svtype(vartype_t type)
+static I32 vartype_to_svtype(vartype_t type)
 {
     switch (type) {
     case VAR_SCALAR:
@@ -139,7 +139,7 @@ I32 vartype_to_svtype(vartype_t type)
     }
 }
 
-vartype_t string_to_vartype(char *vartype)
+static vartype_t string_to_vartype(char *vartype)
 {
     if (strEQ(vartype, "SCALAR")) {
         return VAR_SCALAR;
@@ -161,7 +161,7 @@ vartype_t string_to_vartype(char *vartype)
     }
 }
 
-void _deconstruct_variable_name(SV *variable, varspec_t *varspec)
+static void _deconstruct_variable_name(SV *variable, varspec_t *varspec)
 {
     char *varpv;
 
@@ -194,7 +194,7 @@ void _deconstruct_variable_name(SV *variable, varspec_t *varspec)
     }
 }
 
-void _deconstruct_variable_hash(HV *variable, varspec_t *varspec)
+static void _deconstruct_variable_hash(HV *variable, varspec_t *varspec)
 {
     HE *val;
 
@@ -211,7 +211,7 @@ void _deconstruct_variable_hash(HV *variable, varspec_t *varspec)
     varspec->type = string_to_vartype(SvPV_nolen(HeVAL(val)));
 }
 
-int _valid_for_type(SV *value, vartype_t type)
+static int _valid_for_type(SV *value, vartype_t type)
 {
     svtype sv_type = SvROK(value) ? SvTYPE(SvRV(value)) : SVt_NULL;
 
@@ -235,7 +235,7 @@ int _valid_for_type(SV *value, vartype_t type)
     }
 }
 
-HV *_get_namespace(SV *self)
+static HV *_get_namespace(SV *self)
 {
     dSP;
     SV *ret;
@@ -253,7 +253,7 @@ HV *_get_namespace(SV *self)
     return (HV*)SvRV(ret);
 }
 
-SV *_get_name(SV *self)
+static SV *_get_name(SV *self)
 {
     dSP;
     SV *ret;
@@ -271,7 +271,7 @@ SV *_get_name(SV *self)
     return ret;
 }
 
-void _expand_glob(SV *self, SV *varname)
+static void _expand_glob(SV *self, SV *varname)
 {
     SV *name;
 
@@ -285,7 +285,7 @@ void _expand_glob(SV *self, SV *varname)
     SvREFCNT_dec(name);
 }
 
-SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
+static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
 {
     HV *namespace;
     HE *entry;
