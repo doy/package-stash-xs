@@ -435,7 +435,6 @@ add_symbol(self, variable, initial=NULL, ...)
         int i;
         char *filename = NULL;
         I32 first_line_num = -1, last_line_num = -1;
-        STRLEN namelen;
         SV *dbval;
         HV *dbsub;
 
