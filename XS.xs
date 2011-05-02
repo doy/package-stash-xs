@@ -271,9 +271,11 @@ static SV *_get_name(SV *self)
     return ret;
 }
 
-static void _expand_glob(SV *self, SV *varname)
+static void _expand_glob(SV *self, GV *glob, HV *namespace, SV *varname)
 {
     SV *name;
+    char *namepv;
+    int len;
 
     name = newSVsv(_get_name(self));
     sv_catpvs(name, "::");
@@ -281,7 +283,9 @@ static void _expand_glob(SV *self, SV *varname)
 
     /* can't use gv_init here, because it screws up @ISA in a way that I
      * can't reproduce, but that CMOP triggers */
-    gv_fetchsv(name, GV_ADD, SVt_NULL);
+    /* gv_fetchsv(name, GV_ADD, SVt_NULL); */
+    namepv = SvPV(name, len);
+    gv_init(glob, namespace, namepv, len, 1);
     SvREFCNT_dec(name);
 }
 
@@ -297,8 +301,9 @@ static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
         return NULL;
 
     glob = (GV*)(HeVAL(entry));
-    if (!isGV(glob))
-        _expand_glob(self, variable->name);
+    if (!isGV(glob)) {
+        _expand_glob(self, glob, namespace, variable->name);
+    }
 
     if (vivify) {
         switch (variable->type) {
@@ -714,7 +719,7 @@ get_all_symbols(self, vartype=VAR_NONE)
 
         if (!isGV(gv)) {
             SV *keysv = newSVpvn(key, len);
-            _expand_glob(self, keysv);
+            _expand_glob(self, gv, namespace, keysv);
             SvREFCNT_dec(keysv);
         }
 
