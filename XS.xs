@@ -28,6 +28,30 @@
 #define GvCV_set(gv, cv) (GvCV(gv) = (CV*)(cv))
 #endif
 
+#ifndef SVT_SCALAR
+#define SVT_SCALAR(svt) (svt <= SVt_PVLV)
+#endif
+
+#ifndef SVT_ARRAY
+#define SVT_ARRAY(svt) (svt == SVt_PVAV)
+#endif
+
+#ifndef SVT_HASH
+#define SVT_HASH(svt) (svt == SVt_PVHV)
+#endif
+
+#ifndef SVT_CODE
+#define SVT_CODE(svt) (svt == SVt_PVCV)
+#endif
+
+#ifndef SVT_IO
+#define SVT_IO(svt) (svt == SVt_PVIO)
+#endif
+
+#ifndef SVT_FORMAT
+#define SVT_FORMAT(svt) (svt == SVt_PVFM)
+#endif
+
 /* HACK: scalar slots are always populated on perl < 5.10, so treat undef
  * as nonexistent. this is consistent with the previous behavior of the pure
  * perl version of this module (since this is the behavior that perl sees
@@ -217,17 +241,15 @@ static int _valid_for_type(SV *value, vartype_t type)
 
     switch (type) {
     case VAR_SCALAR:
-        return sv_type != SVt_PVAV && sv_type != SVt_PVHV &&
-               sv_type != SVt_PVCV && sv_type != SVt_PVFM &&
-               sv_type != SVt_PVIO;
+        return SVT_SCALAR(sv_type);
     case VAR_ARRAY:
-        return sv_type == SVt_PVAV;
+        return SVT_ARRAY(sv_type);
     case VAR_HASH:
-        return sv_type == SVt_PVHV;
+        return SVT_HASH(sv_type);
     case VAR_CODE:
-        return sv_type == SVt_PVCV;
+        return SVT_CODE(sv_type);
     case VAR_IO:
-        return sv_type == SVt_PVIO;
+        return SVT_IO(sv_type);
     default:
         return 0;
     }
