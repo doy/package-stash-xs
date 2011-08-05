@@ -1,6 +1,7 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+      - fix the test for scalar values, again (t0m, rafl)
 
 0.22  2011-03-04
       - make the namespace cache lazy and weak, in case the stash is deleted
