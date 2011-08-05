@@ -241,7 +241,11 @@ static int _valid_for_type(SV *value, vartype_t type)
 
     switch (type) {
     case VAR_SCALAR:
-        return SVT_SCALAR(sv_type);
+        /* XXX is a glob a scalar? assigning a glob to the scalar slot seems
+         * to work here, but in pure perl i'm pretty sure it goes to the EGV
+         * slot, which seems more correct to me. just disable it for now
+         * i guess */
+        return SVT_SCALAR(sv_type) && sv_type != SVt_PVGV;
     case VAR_ARRAY:
         return SVT_ARRAY(sv_type);
     case VAR_HASH:
