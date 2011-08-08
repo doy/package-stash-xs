@@ -1,6 +1,8 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+
+0.23  2011-08-08
       - fix the test for scalar values, again (t0m, rafl)
       - disallow assigning globrefs to scalar glob slots (this doesn't actually
         make any sense)
