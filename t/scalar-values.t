@@ -31,7 +31,7 @@ is(exception { $Bar->add_symbol('$pvmg', \$pvmg) }, undef,
    "can add PVMG values");
 
 my $regexp = qr/foo/;
-isa_ok(B::svref_2object($regexp), 'B::REGEXP');
+isa_ok(B::svref_2object($regexp), ($] < 5.012 ? 'B::PVMG' : 'B::REGEXP'));
 is(exception { $Bar->add_symbol('$regexp', $regexp) }, undef,
    "can add REGEXP values");
 
