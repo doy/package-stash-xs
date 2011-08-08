@@ -46,7 +46,7 @@ is(exception { $Bar->add_symbol('$pvlv', \substr($pvlv, 0, 1)) }, undef,
    "can add PVLV values");
 
 my $vstring = v1.2.3;
-is(reftype(\$vstring), 'VSTRING');
+is(reftype(\$vstring), ($] < 5.010 ? 'SCALAR' : 'VSTRING'));
 is(exception { $Bar->add_symbol('$vstring', \$vstring) }, undef,
    "can add vstring values");
 
