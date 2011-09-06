@@ -804,10 +804,18 @@ get_all_symbols(self, vartype=VAR_NONE)
 
 BOOT:
     {
+        const char *vmre = "\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\z";
+#if (PERL_VERSION < 9) || ((PERL_VERSION == 9) && (PERL_SUBVERSION < 5))
+        PMOP fakepmop;
+
+        fakepmop.op_pmflags = 0;
+        valid_module_regex = pregcomp(vmre, vmre + strlen(vmre), &fakepmop);
+#else
         SV *re;
 
-        re = newSVpv("\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\z", 0);
+        re = newSVpv(vmre, 0);
         valid_module_regex = pregcomp(re, 0);
+#endif
 
         name_key = newSVpvs("name");
         PERL_HASH(name_hash, "name", 4);
