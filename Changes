@@ -1,6 +1,8 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+
+0.24  2011-09-05
       - invalid package names (for instance, Foo:Bar) are not allowed
       - invalid stash entry names (anything containing ::) are not allowed
 
