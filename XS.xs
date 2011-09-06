@@ -126,6 +126,7 @@ typedef struct {
 
 static U32 name_hash, namespace_hash, type_hash;
 static SV *name_key, *namespace_key, *type_key;
+static REGEXP *valid_module_regex;
 
 static const char *vartype_to_string(vartype_t type)
 {
@@ -183,6 +184,27 @@ static vartype_t string_to_vartype(char *vartype)
     else {
         croak("Type must be one of 'SCALAR', 'ARRAY', 'HASH', 'CODE', or 'IO', not '%s'", vartype);
     }
+}
+
+static int _is_valid_module_name(SV *package)
+{
+    char *buf;
+    STRLEN len;
+    SV *sv;
+
+    buf = SvPV(package, len);
+
+    /* whee cargo cult */
+    sv = sv_newmortal();
+    sv_upgrade(sv, SVt_PV);
+    SvREADONLY_on(sv);
+    SvLEN(sv) = 0;
+    SvUTF8_on(sv);
+    SvPVX(sv) = buf;
+    SvCUR_set(sv, len);
+    SvPOK_on(sv);
+
+    return pregexec(valid_module_regex, buf, buf + len, buf, 1, sv, 1);
 }
 
 static void _deconstruct_variable_name(SV *variable, varspec_t *varspec)
@@ -385,6 +407,9 @@ new(class, package_name)
   CODE:
     if (!SvPOK(package_name))
         croak("Package::Stash->new must be passed the name of the package to access");
+
+    if (!_is_valid_module_name(package_name))
+        croak("%s is not a module name", SvPV_nolen(package_name));
 
     instance = newHV();
 
@@ -779,6 +804,11 @@ get_all_symbols(self, vartype=VAR_NONE)
 
 BOOT:
     {
+        SV *re;
+
+        re = newSVpv("\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\z", 0);
+        valid_module_regex = pregcomp(re, 0);
+
         name_key = newSVpvs("name");
         PERL_HASH(name_hash, "name", 4);
 
