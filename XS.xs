@@ -384,7 +384,7 @@ new(class, package_name)
     HV *instance;
   CODE:
     if (!SvPOK(package_name))
-        croak("The constructor argument must be the name of a package");
+        croak("Package::Stash->new must be passed the name of the package to access");
 
     instance = newHV();
 
