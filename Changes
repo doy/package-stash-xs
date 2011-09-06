@@ -1,6 +1,8 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+      - invalid package names (for instance, Foo:Bar) are not allowed
+      - invalid stash entry names (anything containing ::) are not allowed
 
 0.23  2011-08-08
       - fix the test for scalar values, again (t0m, rafl)
