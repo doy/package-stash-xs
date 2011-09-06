@@ -235,6 +235,13 @@ static void _deconstruct_variable_hash(HV *variable, varspec_t *varspec)
     varspec->type = string_to_vartype(SvPV_nolen(HeVAL(val)));
 }
 
+static void _check_varspec_is_valid(varspec_t *varspec)
+{
+    if (strstr(SvPV_nolen(varspec->name), "::")) {
+        croak("Variable names may not contain ::");
+    }
+}
+
 static int _valid_for_type(SV *value, vartype_t type)
 {
     svtype sv_type = SvROK(value) ? SvTYPE(SvRV(value)) : SVt_NULL;

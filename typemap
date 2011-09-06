@@ -10,6 +10,7 @@ T_VARSPEC
         _deconstruct_variable_hash((HV*)SvRV($arg), &$var);
     else
         croak(\"varspec must be a string or a hashref\");
+    _check_varspec_is_valid(&$var);
 
 T_VARTYPE
     if (!SvPOK($arg))
