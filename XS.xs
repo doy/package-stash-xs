@@ -478,16 +478,13 @@ add_symbol(self, variable, initial=NULL, ...)
     varspec_t variable
     SV *initial
   PREINIT:
-    SV *name;
     GV *glob;
+    HV *namespace;
+    HE *entry;
   CODE:
     if (initial && !_valid_for_type(initial, variable.type))
         croak("%s is not of type %s",
               SvPV_nolen(initial), vartype_to_string(variable.type));
-
-    name = newSVsv(_get_name(self));
-    sv_catpvs(name, "::");
-    sv_catsv(name, variable.name);
 
     if (items > 2 && (PL_perldb & 0x10) && variable.type == VAR_CODE) {
         int i;
@@ -495,6 +492,7 @@ add_symbol(self, variable, initial=NULL, ...)
         I32 first_line_num = -1, last_line_num = -1;
         SV *dbval;
         HV *dbsub;
+        SV *name;
 
         if ((items - 3) % 2)
             croak("add_symbol: Odd number of elements in %%opts");
@@ -529,6 +527,10 @@ add_symbol(self, variable, initial=NULL, ...)
         if (last_line_num == -1)
             last_line_num = first_line_num;
 
+        name = newSVsv(_get_name(self));
+        sv_catpvs(name, "::");
+        sv_catsv(name, variable.name);
+
         /* http://perldoc.perl.org/perldebguts.html#Debugger-Internals */
         dbsub = get_hv("DB::sub", 1);
         dbval = newSVpvf("%s:%d-%d", filename, first_line_num, last_line_num);
@@ -537,12 +539,52 @@ add_symbol(self, variable, initial=NULL, ...)
                  SvPV_nolen(name));
             SvREFCNT_dec(dbval);
         }
+
+        SvREFCNT_dec(name);
+    }
+
+    namespace = _get_namespace(self);
+    entry = hv_fetch_ent(namespace, variable.name, 1, 0);
+    if (entry && (const GV*)HeVAL(entry) != (const GV*)&PL_sv_undef) {
+        glob = (GV *)HeVAL(entry);
+        if (SvTYPE(glob) == SVt_PVGV) {
+            /* magicalize */
+        }
+    }
+    else {
+        glob = (GV *)newSV(0);
+    }
+
+    if (SvTYPE(glob) != SVt_PVGV) {
+        char *name;
+        STRLEN len;
+        name = SvPV(variable.name, len);
+        gv_init(glob, namespace, name, len, 1);
+    }
+
+    switch (SvTYPE(glob)) {
+    case SVt_PVIO:
+        (void)GvIOn(glob);
+        break;
+    case SVt_PVAV:
+        (void)GvAVn(glob);
+        break;
+    case SVt_PVHV:
+        (void)GvHVn(glob);
+        break;
+    case SVt_NULL:
+    case SVt_PVCV:
+    case SVt_PVFM:
+    case SVt_PVGV:
+        break;
+    default:
+        (void)GvSVn(glob);
     }
 
     /* GV_ADDMULTI rather than GV_ADD because otherwise you get 'used only
      * once' warnings in some situations... i can't reproduce this, but CMOP
      * triggers it */
-    glob = gv_fetchsv(name, GV_ADDMULTI, vartype_to_svtype(variable.type));
+    // glob = gv_fetchsv(name, GV_ADDMULTI, vartype_to_svtype(variable.type));
 
     if (initial) {
         SV *val;
@@ -573,8 +615,6 @@ add_symbol(self, variable, initial=NULL, ...)
             break;
         }
     }
-
-    SvREFCNT_dec(name);
 
 void
 remove_glob(self, name)
