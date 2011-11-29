@@ -5,24 +5,24 @@ use lib 't/lib';
 use Test::More;
 use Test::Fatal;
 
+use Test::Requires 'Package::Anon';
 use Package::Stash;
+use Symbol;
 
-like(exception { Package::Stash->name }, qr/Can't call name as a class method/,
-   q{... can't call name() as a class method});
+plan skip_all => "Anonymous stashes in PP need at least perl 5.14"
+    if $] < 5.014
+    && $Package::Stash::IMPLEMENTATION eq 'PP';
 
-{
-    package Foo;
-
-    use constant SOME_CONSTANT => 1;
-}
+my $Foo = Package::Anon->new('Foo');
+$Foo->{SOME_CONSTANT} = \1;
 
 # ----------------------------------------------------------------------
 ## tests adding a HASH
 
-my $foo_stash = Package::Stash->new('Foo');
-ok(!defined($Foo::{foo}), '... the %foo slot has not been created yet');
+my $foo_stash = Package::Stash->new($Foo);
+ok(!defined($Foo->{foo}), '... the %foo slot has not been created yet');
 ok(!$foo_stash->has_symbol('%foo'), '... the object agrees');
-ok(!defined($Foo::{foo}), '... checking doesn\' vivify');
+ok(!defined($Foo->{foo}), '... checking doesn\'t vivify');
 
 is(exception {
     $foo_stash->add_symbol('%foo' => { one => 1 });
@@ -34,16 +34,13 @@ ok(!$foo_stash->has_symbol('$foo'), '... SCALAR shouldnt have been created too')
 ok(!$foo_stash->has_symbol('@foo'), '... ARRAY shouldnt have been created too');
 ok(!$foo_stash->has_symbol('&foo'), '... CODE shouldnt have been created too');
 
-ok(defined($Foo::{foo}), '... the %foo slot was created successfully');
+ok(defined($Foo->{foo}), '... the %foo slot was created successfully');
 ok($foo_stash->has_symbol('%foo'), '... the meta agrees');
 
 # check the value ...
 
-{
-    no strict 'refs';
-    ok(exists ${'Foo::foo'}{one}, '... our %foo was initialized correctly');
-    is(${'Foo::foo'}{one}, 1, '... our %foo was initialized correctly');
-}
+ok(exists $Foo->{foo}{one}, '... our %foo was initialized correctly');
+is($Foo->{foo}{one}, 1, '... our %foo was initialized correctly');
 
 my $foo = $foo_stash->get_symbol('%foo');
 is_deeply({ one => 1 }, $foo, '... got the right package variable back');
@@ -52,24 +49,21 @@ is_deeply({ one => 1 }, $foo, '... got the right package variable back');
 
 $foo->{two} = 2;
 
-{
-    no strict 'refs';
-    is(\%{'Foo::foo'}, $foo_stash->get_symbol('%foo'), '... our %foo is the same as the metas');
+is(\%{ $Foo->{foo} }, $foo_stash->get_symbol('%foo'), '... our %foo is the same as the metas');
 
-    ok(exists ${'Foo::foo'}{two}, '... our %foo was updated correctly');
-    is(${'Foo::foo'}{two}, 2, '... our %foo was updated correctly');
-}
+ok(exists ${ $Foo->{foo} }{two}, '... our %foo was updated correctly');
+is(${ $Foo->{foo} }{two}, 2, '... our %foo was updated correctly');
 
 # ----------------------------------------------------------------------
 ## test adding an ARRAY
 
-ok(!defined($Foo::{bar}), '... the @bar slot has not been created yet');
+ok(!defined($Foo->{bar}), '... the @bar slot has not been created yet');
 
 is(exception {
     $foo_stash->add_symbol('@bar' => [ 1, 2, 3 ]);
 }, undef, '... created @Foo::bar successfully');
 
-ok(defined($Foo::{bar}), '... the @bar slot was created successfully');
+ok(defined($Foo->{bar}), '... the @bar slot was created successfully');
 ok($foo_stash->has_symbol('@bar'), '... the meta agrees');
 
 # ... why does this not work ...
@@ -80,22 +74,19 @@ ok(!$foo_stash->has_symbol('&bar'), '... CODE shouldnt have been created too');
 
 # check the value itself
 
-{
-    no strict 'refs';
-    is(scalar @{'Foo::bar'}, 3, '... our @bar was initialized correctly');
-    is(${'Foo::bar'}[1], 2, '... our @bar was initialized correctly');
-}
+is(scalar @{ $Foo->{bar} }, 3, '... our @bar was initialized correctly');
+is($Foo->{bar}[1], 2, '... our @bar was initialized correctly');
 
 # ----------------------------------------------------------------------
 ## test adding a SCALAR
 
-ok(!defined($Foo::{baz}), '... the $baz slot has not been created yet');
+ok(!defined($Foo->{baz}), '... the $baz slot has not been created yet');
 
 is(exception {
     $foo_stash->add_symbol('$baz' => 10);
 }, undef, '... created $Foo::baz successfully');
 
-ok(defined($Foo::{baz}), '... the $baz slot was created successfully');
+ok(defined($Foo->{baz}), '... the $baz slot was created successfully');
 ok($foo_stash->has_symbol('$baz'), '... the meta agrees');
 
 ok(!$foo_stash->has_symbol('@baz'), '... ARRAY shouldnt have been created too');
@@ -104,36 +95,30 @@ ok(!$foo_stash->has_symbol('&baz'), '... CODE shouldnt have been created too');
 
 is(${$foo_stash->get_symbol('$baz')}, 10, '... got the right value back');
 
-{
-    no strict 'refs';
-    ${'Foo::baz'} = 1;
+${ $Foo->{baz} } = 1;
 
-    is(${'Foo::baz'}, 1, '... our $baz was assigned to correctly');
-    is(${$foo_stash->get_symbol('$baz')}, 1, '... the meta agrees');
-}
+is(${ $Foo->{baz} }, 1, '... our $baz was assigned to correctly');
+is(${$foo_stash->get_symbol('$baz')}, 1, '... the meta agrees');
 
 # ----------------------------------------------------------------------
 ## test adding a CODE
 
-ok(!defined($Foo::{funk}), '... the &funk slot has not been created yet');
+ok(!defined($Foo->{funk}), '... the &funk slot has not been created yet');
 
 is(exception {
     $foo_stash->add_symbol('&funk' => sub { "Foo::funk" });
 }, undef, '... created &Foo::funk successfully');
 
-ok(defined($Foo::{funk}), '... the &funk slot was created successfully');
+ok(defined($Foo->{funk}), '... the &funk slot was created successfully');
 ok($foo_stash->has_symbol('&funk'), '... the meta agrees');
 
 ok(!$foo_stash->has_symbol('$funk'), '... SCALAR shouldnt have been created too');
 ok(!$foo_stash->has_symbol('@funk'), '... ARRAY shouldnt have been created too');
 ok(!$foo_stash->has_symbol('%funk'), '... HASH shouldnt have been created too');
 
-{
-    no strict 'refs';
-    ok(defined &{'Foo::funk'}, '... our &funk exists');
-}
+ok(defined &{ $Foo->{funk} }, '... our &funk exists');
 
-is(Foo->funk(), 'Foo::funk', '... got the right value from the function');
+is($Foo->bless({})->funk(), 'Foo::funk', '... got the right value from the function');
 
 # ----------------------------------------------------------------------
 ## test multiple slots in the glob
@@ -163,10 +148,7 @@ ok($foo_stash->has_symbol('$foo'), '... the meta agrees');
 my $SCALAR = $foo_stash->get_symbol('$foo');
 is($$SCALAR, 'Foo::foo', '... got the right scalar value back');
 
-{
-    no strict 'refs';
-    is(${'Foo::foo'}, 'Foo::foo', '... got the right value from the scalar');
-}
+is(${ $Foo->{foo} }, 'Foo::foo', '... got the right value from the scalar');
 
 is(exception {
     $foo_stash->remove_symbol('%foo');
@@ -181,13 +163,10 @@ is($foo_stash->get_symbol('@foo'), $ARRAY, '... got the right values for @Foo::f
 is($foo_stash->get_symbol('&foo'), $CODE, '... got the right value for &Foo::foo');
 is($foo_stash->get_symbol('$foo'), $SCALAR, '... got the right value for $Foo::foo');
 
-{
-    no strict 'refs';
-    ok(!defined(*{"Foo::foo"}{HASH}), '... the %foo slot has been removed successfully');
-    ok(defined(*{"Foo::foo"}{ARRAY}), '... the @foo slot has NOT been removed');
-    ok(defined(*{"Foo::foo"}{CODE}), '... the &foo slot has NOT been removed');
-    ok(defined(${"Foo::foo"}), '... the $foo slot has NOT been removed');
-}
+ok(!defined(*{ $Foo->{foo} }{HASH}), '... the %foo slot has been removed successfully');
+ok(defined(*{ $Foo->{foo} }{ARRAY}), '... the @foo slot has NOT been removed');
+ok(defined(*{ $Foo->{foo} }{CODE}), '... the &foo slot has NOT been removed');
+ok(defined(${ $Foo->{foo} }), '... the $foo slot has NOT been removed');
 
 is(exception {
     $foo_stash->remove_symbol('&foo');
@@ -201,13 +180,10 @@ ok($foo_stash->has_symbol('$foo'), '... the $foo slot still exists');
 is($foo_stash->get_symbol('@foo'), $ARRAY, '... got the right values for @Foo::foo');
 is($foo_stash->get_symbol('$foo'), $SCALAR, '... got the right value for $Foo::foo');
 
-{
-    no strict 'refs';
-    ok(!defined(*{"Foo::foo"}{HASH}), '... the %foo slot has been removed successfully');
-    ok(!defined(*{"Foo::foo"}{CODE}), '... the &foo slot has now been removed');
-    ok(defined(*{"Foo::foo"}{ARRAY}), '... the @foo slot has NOT been removed');
-    ok(defined(${"Foo::foo"}), '... the $foo slot has NOT been removed');
-}
+ok(!defined(*{ $Foo->{foo} }{HASH}), '... the %foo slot has been removed successfully');
+ok(!defined(*{ $Foo->{foo} }{CODE}), '... the &foo slot has now been removed');
+ok(defined(*{ $Foo->{foo} }{ARRAY}), '... the @foo slot has NOT been removed');
+ok(defined(${ $Foo->{foo} }), '... the $foo slot has NOT been removed');
 
 is(exception {
     $foo_stash->remove_symbol('$foo');
@@ -219,13 +195,10 @@ ok($foo_stash->has_symbol('@foo'), '... the @foo slot still exists');
 
 is($foo_stash->get_symbol('@foo'), $ARRAY, '... got the right values for @Foo::foo');
 
-{
-    no strict 'refs';
-    ok(!defined(*{"Foo::foo"}{HASH}), '... the %foo slot has been removed successfully');
-    ok(!defined(*{"Foo::foo"}{CODE}), '... the &foo slot has now been removed');
-    ok(!defined(${"Foo::foo"}), '... the $foo slot has now been removed');
-    ok(defined(*{"Foo::foo"}{ARRAY}), '... the @foo slot has NOT been removed');
-}
+ok(!defined(*{ $Foo->{foo} }{HASH}), '... the %foo slot has been removed successfully');
+ok(!defined(*{ $Foo->{foo} }{CODE}), '... the &foo slot has now been removed');
+ok(!defined(${ $Foo->{foo} }), '... the $foo slot has now been removed');
+ok(defined(*{ $Foo->{foo} }{ARRAY}), '... the @foo slot has NOT been removed');
 
 {
     my $syms = $foo_stash->get_all_symbols;
@@ -273,7 +246,7 @@ is($foo_stash->get_symbol('@foo'), $ARRAY, '... got the right values for @Foo::f
 
     is_deeply(
         $syms,
-        { zork => *{ $Foo::{zork} }{HASH} },
+        { zork => *{ $Foo->{zork} }{HASH} },
         "got the right ones",
     );
 }
@@ -292,56 +265,30 @@ like(exception {
     $foo_stash->add_symbol('$bar', sub { })
 }, qr/CODE.*is not of type SCALAR/, "can't initialize a slot with the wrong type of value");
 
-{
-    package Bar;
-    open *foo, '<', $0;
-}
-
 like(exception {
-    $foo_stash->add_symbol('$bar', *Bar::foo{IO})
+    $foo_stash->add_symbol('$bar', *{ Symbol::geniosym() }{IO})
 }, qr/IO.*is not of type SCALAR/, "can't initialize a slot with the wrong type of value");
 
-# check compile time manipulation
+is_deeply([Package::Stash->new('Foo')->list_all_symbols], [],
+          "Foo:: isn't touched");
+
+my $Quux = Package::Anon->new('Quux');
+$Quux->{foo} = *{ Symbol::gensym() };
+*{ $Quux->{foo} } = \23;
+*{ $Quux->{foo} } = ["bar"];
+*{ $Quux->{foo} } = { baz => 1 };
+*{ $Quux->{foo} } = sub { };
+*{ $Quux->{foo} } = *{ Symbol::geniosym() }{IO};
 
 {
-    package Baz;
-
-    our $foo = 23;
-    our @foo = "bar";
-    our %foo = (baz => 1);
-    sub foo { }
-    open *foo, '<', $0;
-    BEGIN { Package::Stash->new(__PACKAGE__)->remove_symbol('&foo') }
-}
-
-{
-    my $stash = Package::Stash->new('Baz');
-    is(${ $stash->get_symbol('$foo') }, 23, "got \$foo");
-    is_deeply($stash->get_symbol('@foo'), ['bar'], "got \@foo");
-    is_deeply($stash->get_symbol('%foo'), {baz => 1}, "got \%foo");
-    ok(!$stash->has_symbol('&foo'), "got \&foo");
-    is($stash->get_symbol('foo'), *Baz::foo{IO}, "got foo");
-}
-
-{
-    package Quux;
-
-    our $foo = 23;
-    our @foo = "bar";
-    our %foo = (baz => 1);
-    sub foo { }
-    open *foo, '<', $0;
-}
-
-{
-    my $stash = Package::Stash->new('Quux');
+    my $stash = Package::Stash->new($Quux);
 
     my %expect = (
         '$foo' => \23,
         '@foo' => ["bar"],
         '%foo' => { baz => 1 },
-        '&foo' => \&Quux::foo,
-        'foo'  => *Quux::foo{IO},
+        '&foo' => \&{ $Quux->{foo} },
+        'foo'  => *{ $Quux->{foo} }{IO},
     );
 
     for my $sym ( sort keys %expect ) {
@@ -377,23 +324,34 @@ like(exception {
     }
 }
 
-{
-    package Quuux;
-    our $foo;
-    our @foo;
-    our @bar;
-    our %baz;
-    sub baz { }
-    use constant quux => 1;
-    use constant quuux => [];
-    sub quuuux;
-}
+is_deeply([Package::Stash->new('Quux')->list_all_symbols], [],
+          "Quux:: isn't touched");
+
+my $Quuux = Package::Anon->new('Quuux');
+
+$Quuux->{foo} = *{ Symbol::gensym() };
+*{ $Quuux->{foo} } = \(my $scalar);
+*{ $Quuux->{foo} } = [];
+
+$Quuux->{bar} = *{ Symbol::gensym() };
+*{ $Quuux->{bar} } = [];
+
+$Quuux->{baz} = *{ Symbol::gensym() };
+*{ $Quuux->{baz} } = {};
+*{ $Quuux->{baz} } = sub { };
+
+$Quuux->{quux} = \1;
+
+$Quuux->{quuux} = \[];
+
+$Quuux->{quuuux} = -1;
 
 {
-    my $quuux = Package::Stash->new('Quuux');
+    my $quuux = Package::Stash->new($Quuux);
     is_deeply(
-        [sort $quuux->list_all_symbols],
-        [qw(BEGIN bar baz foo quuuux quuux quux)],
+        # Package::Anon adds a couple methods
+        [grep { $_ ne 'isa' && $_ ne 'can' } sort $quuux->list_all_symbols],
+        [qw(bar baz foo quuuux quuux quux)],
         "list_all_symbols",
     );
     { local $TODO = $] < 5.010
@@ -416,30 +374,14 @@ like(exception {
         "list_all_symbols HASH",
     );
     is_deeply(
-        [sort $quuux->list_all_symbols('CODE')],
+        # Package::Anon adds a couple methods
+        [grep { $_ ne 'isa' && $_ ne 'can' } sort $quuux->list_all_symbols('CODE')],
         [qw(baz quuuux quuux quux)],
         "list_all_symbols CODE",
     );
 }
 
-for my $package ('Foo:Bar', 'Foo/Bar', 'Foo Bar', 'Foo:::Bar', '') {
-    like(
-        exception { Package::Stash->new($package) },
-        qr/^$package is not a module name/,
-        "$package is not a module name"
-    );
-}
-
-like(
-    exception { Package::Stash->new([]) },
-    qr/^Package::Stash->new must be passed the name of the package to access/,
-    "module name must be a string"
-);
-
-like(
-    exception { Package::Stash->new(undef) },
-    qr/^Package::Stash->new must be passed the name of the package to access/,
-    "module name must be a string"
-);
+is_deeply([Package::Stash->new('Quuux')->list_all_symbols], [],
+          "Quuux:: isn't touched");
 
 done_testing;
