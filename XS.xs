@@ -399,24 +399,35 @@ MODULE = Package::Stash::XS  PACKAGE = Package::Stash::XS
 PROTOTYPES: DISABLE
 
 SV*
-new(class, package_name)
+new(class, package)
     SV *class
-    SV *package_name
+    SV *package
   PREINIT:
     HV *instance;
   CODE:
-    if (!SvPOK(package_name))
+    if (SvPOK(package)) {
+        if (!_is_valid_module_name(package))
+            croak("%s is not a module name", SvPV_nolen(package));
+
+        instance = newHV();
+
+        if (!hv_store(instance, "name", 4, SvREFCNT_inc_simple_NN(package), 0)) {
+            SvREFCNT_dec(package);
+            SvREFCNT_dec(instance);
+            croak("Couldn't initialize the 'name' key, hv_store failed");
+        }
+    }
+    else if (SvROK(package) && SvTYPE(SvRV(package)) == SVt_PVHV) {
+        instance = newHV();
+
+        if (!hv_store(instance, "namespace", 9, SvREFCNT_inc_simple_NN(package), 0)) {
+            SvREFCNT_dec(package);
+            SvREFCNT_dec(instance);
+            croak("Couldn't initialize the 'namespace' key, hv_store failed");
+        }
+    }
+    else {
         croak("Package::Stash->new must be passed the name of the package to access");
-
-    if (!_is_valid_module_name(package_name))
-        croak("%s is not a module name", SvPV_nolen(package_name));
-
-    instance = newHV();
-
-    if (!hv_store(instance, "name", 4, SvREFCNT_inc_simple_NN(package_name), 0)) {
-        SvREFCNT_dec(package_name);
-        SvREFCNT_dec(instance);
-        croak("Couldn't initialize the 'name' key, hv_store failed");
     }
 
     RETVAL = sv_bless(newRV_noinc((SV*)instance), gv_stashsv(class, 0));
@@ -431,8 +442,12 @@ name(self)
   CODE:
     if (!sv_isobject(self))
         croak("Can't call name as a class method");
-    slot = hv_fetch_ent((HV*)SvRV(self), name_key, 0, name_hash);
-    RETVAL = slot ? SvREFCNT_inc_simple_NN(HeVAL(slot)) : &PL_sv_undef;
+    if (slot = hv_fetch_ent((HV*)SvRV(self), name_key, 0, name_hash)) {
+        RETVAL = SvREFCNT_inc_simple_NN(HeVAL(slot));
+    }
+    else {
+        croak("Can't get the name of an anonymous package");
+    }
   OUTPUT:
     RETVAL
 
