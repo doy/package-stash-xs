@@ -101,7 +101,8 @@
         GvASSUMECV_on(g);               \
     }                                   \
     GvCVGEN(g) = 0;                     \
-    mro_method_changed_in(GvSTASH(g));  \
+    if (HvENAME_get(GvSTASH(g)))        \
+        mro_method_changed_in(GvSTASH(g)); \
 } while (0)
 #define GvSetIO(g,v) do {               \
     SvREFCNT_dec(GvIO(g));              \
