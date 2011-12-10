@@ -332,6 +332,31 @@ static void _real_gv_init(GV *gv, HV *stash, SV *name)
 
     name_pv = SvPV(name, name_len);
     gv_init(gv, stash, name_pv, name_len, 1);
+
+    /* XXX: copied and pasted from gv_fetchpvn_flags and such */
+    /* ignoring the stuff for CORE:: and main:: for now, and also
+     * ignoring the GvMULTI_on bits, since we pass 1 to gv_init above */
+    switch (name_pv[0]) {
+        case 'I':
+            if (strEQ(&name_pv[1], "SA")) {
+                AV *av;
+
+                av = GvAVn(gv);
+                sv_magic(MUTABLE_SV(av), MUTABLE_SV(gv), PERL_MAGIC_isa,
+                        NULL, 0);
+            }
+            break;
+        case 'O':
+            if (strEQ(&name_pv[1], "VERLOAD")) {
+                HV *hv;
+
+                hv = GvHVn(gv);
+                hv_magic(hv, NULL, PERL_MAGIC_overload);
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 static void _expand_glob(SV *self, SV *varname)
