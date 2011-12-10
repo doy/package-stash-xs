@@ -325,6 +325,15 @@ static SV *_get_name(SV *self)
     return ret;
 }
 
+static void _real_gv_init(GV *gv, HV *stash, SV *name)
+{
+    char *name_pv;
+    STRLEN name_len;
+
+    name_pv = SvPV(name, name_len);
+    gv_init(gv, stash, name_pv, name_len, 1);
+}
+
 static void _expand_glob(SV *self, SV *varname)
 {
     HV *namespace;
@@ -339,12 +348,8 @@ static void _expand_glob(SV *self, SV *varname)
             croak("_expand_glob called on stash slot with expanded glob");
         }
         else {
-            char *varname_pv;
-            STRLEN varname_len;
-
-            varname_pv = SvPV(varname, varname_len);
-            gv_init(glob, namespace, varname_pv, varname_len, 1);
             SvREFCNT_inc(glob);
+            _real_gv_init(glob, namespace, varname);
             if (!hv_store_ent(namespace, varname, (SV*)glob, 0)) {
                 croak("hv_store failed");
             }
@@ -583,11 +588,8 @@ add_symbol(self, variable, initial=NULL, ...)
         glob = (GV*)HeVAL(entry);
     }
     else {
-        char *varname_pv;
-        STRLEN varname_len;
         glob = (GV*)newSV(0);
-        varname_pv = SvPV(variable.name, varname_len);
-        gv_init(glob, namespace, varname_pv, varname_len, 1);
+        _real_gv_init(glob, namespace, variable.name);
         if (!hv_store_ent(namespace, variable.name, (SV*)glob, 0)) {
             croak("hv_store failed");
         }
