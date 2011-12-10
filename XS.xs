@@ -493,22 +493,19 @@ add_symbol(self, variable, initial=NULL, ...)
     varspec_t variable
     SV *initial
   PREINIT:
-    SV *name;
     GV *glob;
+    HV *namespace;
+    HE *entry;
   CODE:
     if (initial && !_valid_for_type(initial, variable.type))
         croak("%s is not of type %s",
               SvPV_nolen(initial), vartype_to_string(variable.type));
 
-    name = newSVsv(_get_name(self));
-    sv_catpvs(name, "::");
-    sv_catsv(name, variable.name);
-
     if (items > 2 && (PL_perldb & 0x10) && variable.type == VAR_CODE) {
         int i;
         char *filename = NULL;
         I32 first_line_num = -1, last_line_num = -1;
-        SV *dbval;
+        SV *dbval, *name;
         HV *dbsub;
 
         if ((items - 3) % 2)
@@ -544,6 +541,10 @@ add_symbol(self, variable, initial=NULL, ...)
         if (last_line_num == -1)
             last_line_num = first_line_num;
 
+        name = newSVsv(_get_name(self));
+        sv_catpvs(name, "::");
+        sv_catsv(name, variable.name);
+
         /* http://perldoc.perl.org/perldebguts.html#Debugger-Internals */
         dbsub = get_hv("DB::sub", 1);
         dbval = newSVpvf("%s:%d-%d", filename, first_line_num, last_line_num);
@@ -552,12 +553,25 @@ add_symbol(self, variable, initial=NULL, ...)
                  SvPV_nolen(name));
             SvREFCNT_dec(dbval);
         }
+
+        SvREFCNT_dec(name);
     }
 
     /* GV_ADDMULTI rather than GV_ADD because otherwise you get 'used only
      * once' warnings in some situations... i can't reproduce this, but CMOP
      * triggers it */
-    glob = gv_fetchsv(name, GV_ADDMULTI, vartype_to_svtype(variable.type));
+    namespace = _get_namespace(self);
+    entry = hv_fetch_ent(namespace, variable.name, 0, 0);
+    if (entry) {
+        glob = (GV*)HeVAL(entry);
+    }
+    else {
+        glob = (GV*)newSV(0);
+        gv_init(glob, namespace, "ANON", 4, 1);
+        if (!hv_store_ent(namespace, variable.name, (SV*)glob, 0)) {
+            croak("hv_store failed");
+        }
+    }
 
     if (initial) {
         SV *val;
@@ -588,8 +602,6 @@ add_symbol(self, variable, initial=NULL, ...)
             break;
         }
     }
-
-    SvREFCNT_dec(name);
 
 void
 remove_glob(self, name)
