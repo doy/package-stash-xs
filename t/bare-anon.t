@@ -25,9 +25,7 @@ my $stash = Package::Stash->new($anon);
 }
 
 {
-    local $TODO = ($Package::Stash::IMPLEMENTATION eq 'PP')
-        ? "can't inflate weird stash entries"
-        : undef;
+    local $TODO = "can't inflate weird stash entries";
     $anon->{bar} = \123;
 
     is(
@@ -43,9 +41,7 @@ my $stash = Package::Stash->new($anon);
 }
 
 {
-    local $TODO = ($Package::Stash::IMPLEMENTATION eq 'PP')
-        ? "can't inflate weird stash entries"
-        : undef;
+    local $TODO = "can't inflate weird stash entries";
     $anon->{baz} = -1;
 
     is(
