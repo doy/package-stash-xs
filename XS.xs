@@ -326,16 +326,32 @@ static SV *_get_name(SV *self)
 
 static void _expand_glob(SV *self, SV *varname)
 {
-    SV *name;
+    HV *namespace;
+    HE *entry;
+    GV *glob;
 
-    name = newSVsv(_get_name(self));
-    sv_catpvs(name, "::");
-    sv_catsv(name, varname);
+    namespace = _get_namespace(self);
 
-    /* can't use gv_init here, because it screws up @ISA in a way that I
-     * can't reproduce, but that CMOP triggers */
-    gv_fetchsv(name, GV_ADD, SVt_NULL);
-    SvREFCNT_dec(name);
+    if (entry = hv_fetch_ent(namespace, varname, 0, 0)) {
+        glob = (GV*)HeVAL(entry);
+        if (isGV(glob)) {
+            croak("_expand_glob called on stash slot with expanded glob");
+        }
+        else {
+            char *varname_pv;
+            STRLEN varname_len;
+
+            varname_pv = SvPV(varname, varname_len);
+            gv_init(glob, namespace, varname_pv, varname_len, 1);
+            SvREFCNT_inc(glob);
+            if (!hv_store_ent(namespace, varname, (SV*)glob, 0)) {
+                croak("hv_store failed");
+            }
+        }
+    }
+    else {
+        croak("_expand_glob called on nonexistent stash slot");
+    }
 }
 
 static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
