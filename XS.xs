@@ -582,8 +582,11 @@ add_symbol(self, variable, initial=NULL, ...)
         glob = (GV*)HeVAL(entry);
     }
     else {
+        char *varname_pv;
+        STRLEN varname_len;
         glob = (GV*)newSV(0);
-        gv_init(glob, namespace, "ANON", 4, 1);
+        varname_pv = SvPV(variable.name, varname_len);
+        gv_init(glob, namespace, varname_pv, varname_len, 1);
         if (!hv_store_ent(namespace, variable.name, (SV*)glob, 0)) {
             croak("hv_store failed");
         }
