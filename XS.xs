@@ -96,7 +96,7 @@
 } while (0)
 #define GvSetCV(g,v) do {               \
     SvREFCNT_dec(GvCV(g));              \
-    if ((GvCV_set(g, v))) {             \
+    if ((GvCV_set(g, (CV*)(v)))) {      \
         GvIMPORTED_CV_on(g);            \
         GvASSUMECV_on(g);               \
     }                                   \
