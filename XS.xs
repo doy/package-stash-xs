@@ -28,6 +28,14 @@
 #define GvCV_set(gv, cv) (GvCV(gv) = (CV*)(cv))
 #endif
 
+#ifndef MUTABLE_PTR
+#define MUTABLE_PTR(p) ((void *) (p))
+#endif
+
+#ifndef MUTABLE_SV
+#define MUTABLE_SV(p) ((SV *)MUTABLE_PTR(p))
+#endif
+
 #ifndef SVT_SCALAR
 #define SVT_SCALAR(svt) (svt <= SVt_PVLV)
 #endif
