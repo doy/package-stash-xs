@@ -2,8 +2,6 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#define NEED_newRV_noinc
-#define NEED_sv_2pv_flags
 #include "ppport.h"
 
 #ifndef gv_fetchsv
@@ -18,10 +16,6 @@
 #define newSVhe(he) newSVhek(HeKEY_hek(he))
 #else
 #define newSVhe(he) newSVpv(HePV(he, PL_na), 0)
-#endif
-
-#ifndef savesvpv
-#define savesvpv(s) savepv(SvPV_nolen(s))
 #endif
 
 #ifndef GvCV_set
