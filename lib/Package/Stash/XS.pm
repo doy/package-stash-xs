@@ -1,6 +1,7 @@
 package Package::Stash::XS;
 use strict;
 use warnings;
+use 5.008001;
 # ABSTRACT: faster and more correct implementation of the Package::Stash API
 
 use XSLoader;
