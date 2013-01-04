@@ -56,7 +56,8 @@ is(ref($stash->get_or_add_symbol('$glob')), 'SCALAR', "got an empty scalar");
 SKIP: {
     skip "PP doesn't support anon stashes before 5.14", 4
         if $] < 5.014 && $Package::Stash::IMPLEMENTATION eq 'PP';
-    local $TODO = "don't know how to properly inflate a stash entry";
+    local $TODO = "don't know how to properly inflate a stash entry in PP"
+        if $Package::Stash::IMPLEMENTATION eq 'PP';
 
     my $anon = {}; # not using Package::Anon
     $anon->{foo} = -1;     # stub
