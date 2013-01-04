@@ -556,6 +556,10 @@ new(class, package)
         }
     }
     else if (SvROK(package) && SvTYPE(SvRV(package)) == SVt_PVHV) {
+#if PERL_VERSION < 10
+        croak("The XS implementation of Package::Stash does not support "
+              "anonymous stashes before perl 5.10");
+#else
         instance = newHV();
 
         if (!hv_store(instance, "namespace", 9, SvREFCNT_inc_simple_NN(package), 0)) {
@@ -563,6 +567,7 @@ new(class, package)
             SvREFCNT_dec(instance);
             croak("Couldn't initialize the 'namespace' key, hv_store failed");
         }
+#endif
     }
     else {
         croak("Package::Stash->new must be passed the name of the package to access");
