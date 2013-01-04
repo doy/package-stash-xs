@@ -386,6 +386,105 @@ static void _expand_glob(SV *self, SV *varname)
     }
 }
 
+static SV *_undef_for_type(vartype_t type)
+{
+    switch (type) {
+    case VAR_SCALAR:
+        return newSV(0);
+        break;
+    case VAR_ARRAY:
+        return (SV*)newAV();
+        break;
+    case VAR_HASH:
+        return (SV*)newHV();
+        break;
+    case VAR_CODE:
+        croak("Don't know how to vivify CODE variables");
+    case VAR_IO:
+        return (SV*)newIO();
+        break;
+    default:
+        croak("Unknown type in vivication");
+    }
+}
+
+static void _add_symbol(SV *self, varspec_t variable, SV *initial)
+{
+    GV *glob;
+    HV *namespace;
+    HE *entry;
+    SV *val;
+
+    /* GV_ADDMULTI rather than GV_ADD because otherwise you get 'used only
+     * once' warnings in some situations... i can't reproduce this, but CMOP
+     * triggers it */
+    namespace = _get_namespace(self);
+    entry = hv_fetch_ent(namespace, variable.name, 0, 0);
+    if (entry) {
+        glob = (GV*)HeVAL(entry);
+    }
+    else {
+        glob = (GV*)newSV(0);
+        _real_gv_init(glob, namespace, variable.name);
+        if (!hv_store_ent(namespace, variable.name, (SV*)glob, 0)) {
+            croak("hv_store failed");
+        }
+    }
+
+    if (!initial) {
+        val = _undef_for_type(variable.type);
+    }
+    else if (SvROK(initial)) {
+        val = SvRV(initial);
+        SvREFCNT_inc_simple_void_NN(val);
+    }
+    else {
+        val = newSVsv(initial);
+    }
+
+    switch (variable.type) {
+    case VAR_SCALAR:
+        GvSetSV(glob, val);
+        break;
+    case VAR_ARRAY:
+        GvSetAV(glob, val);
+        break;
+    case VAR_HASH:
+        GvSetHV(glob, val);
+        break;
+    case VAR_CODE:
+        GvSetCV(glob, val);
+        break;
+    case VAR_IO:
+        GvSetIO(glob, val);
+        break;
+    }
+}
+
+static int _slot_exists(GV *glob, vartype_t type)
+{
+    switch (type) {
+    case VAR_SCALAR:
+        return GvSVOK(glob) ? 1 : 0;
+        break;
+    case VAR_ARRAY:
+        return GvAVOK(glob) ? 1 : 0;
+        break;
+    case VAR_HASH:
+        return GvHVOK(glob) ? 1 : 0;
+        break;
+    case VAR_CODE:
+        croak("Don't know how to vivify CODE variables");
+    case VAR_IO:
+        return GvIOOK(glob) ? 1 : 0;
+        break;
+    default:
+        croak("Unknown type in vivication");
+    }
+
+    return 0;
+}
+
 static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
 {
     HV *namespace;
@@ -401,29 +500,8 @@ static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
     if (!isGV(glob))
         _expand_glob(self, variable->name);
 
-    if (vivify) {
-        switch (variable->type) {
-        case VAR_SCALAR:
-            if (!GvSVOK(glob))
-                GvSetSV(glob, newSV(0));
-            break;
-        case VAR_ARRAY:
-            if (!GvAVOK(glob))
-                GvSetAV(glob, newAV());
-            break;
-        case VAR_HASH:
-            if (!GvHVOK(glob))
-                GvSetHV(glob, newHV());
-            break;
-        case VAR_CODE:
-            croak("Don't know how to vivify CODE variables");
-        case VAR_IO:
-            if (!GvIOOK(glob))
-                GvSetIO(glob, newIO());
-            break;
-        default:
-            croak("Unknown type in vivication");
-        }
+    if (vivify && !_slot_exists(glob, variable->type)) {
+        _add_symbol(self, *variable, NULL);
     }
 
     switch (variable->type) {
@@ -540,10 +618,6 @@ add_symbol(self, variable, initial=NULL, ...)
     SV *self
     varspec_t variable
     SV *initial
-  PREINIT:
-    GV *glob;
-    HV *namespace;
-    HE *entry;
   CODE:
     if (initial && !_valid_for_type(initial, variable.type))
         croak("%s is not of type %s",
@@ -605,51 +679,7 @@ add_symbol(self, variable, initial=NULL, ...)
         SvREFCNT_dec(name);
     }
 
-    /* GV_ADDMULTI rather than GV_ADD because otherwise you get 'used only
-     * once' warnings in some situations... i can't reproduce this, but CMOP
-     * triggers it */
-    namespace = _get_namespace(self);
-    entry = hv_fetch_ent(namespace, variable.name, 0, 0);
-    if (entry) {
-        glob = (GV*)HeVAL(entry);
-    }
-    else {
-        glob = (GV*)newSV(0);
-        _real_gv_init(glob, namespace, variable.name);
-        if (!hv_store_ent(namespace, variable.name, (SV*)glob, 0)) {
-            croak("hv_store failed");
-        }
-    }
-
-    if (initial) {
-        SV *val;
-
-        if (SvROK(initial)) {
-            val = SvRV(initial);
-            SvREFCNT_inc_simple_void_NN(val);
-        }
-        else {
-            val = newSVsv(initial);
-        }
-
-        switch (variable.type) {
-        case VAR_SCALAR:
-            GvSetSV(glob, val);
-            break;
-        case VAR_ARRAY:
-            GvSetAV(glob, val);
-            break;
-        case VAR_HASH:
-            GvSetHV(glob, val);
-            break;
-        case VAR_CODE:
-            GvSetCV(glob, val);
-            break;
-        case VAR_IO:
-            GvSetIO(glob, val);
-            break;
-        }
-    }
+    _add_symbol(self, variable, initial);
 
 void
 remove_glob(self, name)
