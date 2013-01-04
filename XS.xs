@@ -837,6 +837,14 @@ list_all_symbols(self, vartype=VAR_NONE)
         keys = hv_iterinit(namespace);
         EXTEND(SP, keys);
         while ((entry = hv_iternext(namespace))) {
+#if PERL_VERSION < 10
+            char *pv;
+            STRLEN len;
+            pv = HePV(entry, len);
+            if (strnEQ(entry, "::ISA::CACHE::", len)) {
+                continue;
+            }
+#endif
             mPUSHs(newSVhe(entry));
         }
     }
@@ -850,6 +858,11 @@ list_all_symbols(self, vartype=VAR_NONE)
         hv_iterinit(namespace);
         while ((val = hv_iternextsv(namespace, &key, &len))) {
             GV *gv = (GV*)val;
+#if PERL_VERSION < 10
+            if (vartype == VAR_SCALAR && strnEQ(key, "::ISA::CACHE::", len)) {
+                continue;
+            }
+#endif
             if (isGV(gv)) {
                 switch (vartype) {
                 case VAR_SCALAR:
@@ -898,6 +911,12 @@ get_all_symbols(self, vartype=VAR_NONE)
     hv_iterinit(namespace);
     while ((val = hv_iternextsv(namespace, &key, &len))) {
         GV *gv = (GV*)val;
+#if PERL_VERSION < 10
+        if ((vartype == VAR_SCALAR || vartype == VAR_NONE)
+            && strnEQ(key, "::ISA::CACHE::", len)) {
+            continue;
+        }
+#endif
 
         if (!isGV(gv)) {
             SV *keysv = newSVpvn(key, len);
