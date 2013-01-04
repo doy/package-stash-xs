@@ -89,9 +89,12 @@ SKIP: {
 }
 
 {
+    local $TODO = $] < 5.010
+        ? "undef scalars aren't visible on 5.8"
+        : undef;
     my $stash = Package::Stash->new('Baz');
     $stash->add_symbol('$baz', \undef);
-    ok($stash->has_symbol('$baz'));
+    ok($stash->has_symbol('$baz'), "immortal scalars are also visible");
 }
 
 done_testing;
