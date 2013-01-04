@@ -1,6 +1,8 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+
+0.26  2013-01-04
       - internal refactorings to support Package::Anon stashes - this should
         work now
 
