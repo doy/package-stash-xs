@@ -332,6 +332,9 @@ static void _real_gv_init(GV *gv, HV *stash, SV *name)
     STRLEN name_len;
 
     name_pv = SvPV(name, name_len);
+    if (!HvENAME_get(stash)) {
+        hv_name_set(stash, "__ANON__", 8, 0);
+    }
     gv_init(gv, stash, name_pv, name_len, 1);
 
     /* XXX: copied and pasted from gv_fetchpvn_flags and such */
