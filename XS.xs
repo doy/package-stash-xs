@@ -12,6 +12,10 @@
 #define mro_method_changed_in(x) PL_sub_generation++
 #endif
 
+#ifndef HvENAME
+#define HvENAME HvNAME
+#endif
+
 #ifdef newSVhek
 #define newSVhe(he) newSVhek(HeKEY_hek(he))
 #else
@@ -332,7 +336,7 @@ static void _real_gv_init(GV *gv, HV *stash, SV *name)
     STRLEN name_len;
 
     name_pv = SvPV(name, name_len);
-    if (!HvENAME_get(stash)) {
+    if (!HvENAME(stash)) {
         hv_name_set(stash, "__ANON__", 8, 0);
     }
     gv_init(gv, stash, name_pv, name_len, 1);
