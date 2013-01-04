@@ -16,6 +16,11 @@
 #define HvENAME HvNAME
 #endif
 
+#ifndef hv_name_set
+#define hv_name_set(stash, name, namelen, flags) \
+    (HvNAME(stash) = savepvn(name, namelen))
+#endif
+
 #ifdef newSVhek
 #define newSVhe(he) newSVhek(HeKEY_hek(he))
 #else
