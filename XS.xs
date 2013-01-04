@@ -470,6 +470,9 @@ static void _add_symbol(SV *self, varspec_t variable, SV *initial)
     case VAR_IO:
         GvSetIO(glob, val);
         break;
+    default:
+        croak("Unknown variable type in add_symbol");
+        break;
     }
 }
 
@@ -738,6 +741,8 @@ has_symbol(self, variable)
         case VAR_IO:
             RETVAL = GvIOOK(glob) ? 1 : 0;
             break;
+        default:
+            croak("Unknown variable type in has_symbol");
         }
     }
     else {
@@ -807,6 +812,9 @@ remove_symbol(self, variable)
         case VAR_IO:
             GvSetIO(glob, NULL);
             break;
+        default:
+            croak("Unknown variable type in remove_symbol");
+            break;
         }
     }
     else {
@@ -864,6 +872,8 @@ list_all_symbols(self, vartype=VAR_NONE)
                     if (GvIOOK(val))
                         mXPUSHp(key, len);
                     break;
+                default:
+                    croak("Unknown variable type in list_all_symbols");
                 }
             }
             else if (vartype == VAR_CODE) {
@@ -919,6 +929,8 @@ get_all_symbols(self, vartype=VAR_NONE)
         case VAR_NONE:
             hv_store(ret, key, len, SvREFCNT_inc_simple_NN(val), 0);
             break;
+        default:
+            croak("Unknown variable type in get_all_symbols");
         }
     }
 
