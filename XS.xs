@@ -416,7 +416,7 @@ static SV *_undef_for_type(vartype_t type)
         return (SV*)newIO();
         break;
     default:
-        croak("Unknown type in vivication");
+        croak("Unknown type in vivification");
     }
 }
 
@@ -494,7 +494,7 @@ static int _slot_exists(GV *glob, vartype_t type)
         return GvIOOK(glob) ? 1 : 0;
         break;
     default:
-        croak("Unknown type in vivication");
+        croak("Unknown type in vivification");
     }
 
     return 0;
