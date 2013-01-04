@@ -73,7 +73,9 @@ use Symbol;
     no_leaks_ok {
         $foo->add_symbol('&code_init' => sub { "foo" });
     } "add_symbol code doesn't leak";
-    { local $TODO = "the pure perl implementation leaks here somehow";
+    { local $TODO = $Package::Stash::IMPLEMENTATION eq 'PP'
+        ? "the pure perl implementation leaks here somehow"
+        : undef;
     no_leaks_ok {
         $foo->add_symbol('io_init' => Symbol::geniosym);
     } "add_symbol io doesn't leak";
