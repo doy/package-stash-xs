@@ -29,19 +29,12 @@ installed, and should be preferred in all environments with a compiler.
 
 No known bugs (but see the BUGS section in L<Package::Stash>).
 
-Please report any bugs through RT: email
-C<bug-package-stash-xs at rt.cpan.org>, or browse to
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Package-Stash-XS>.
+Please report any bugs to GitHub Issues at
+L<https://github.com/doy/package-stash-xs/issues>.
 
 =head1 SEE ALSO
 
-=over 4
-
-=item * L<Class::MOP::Package>
-
-This module is a factoring out of code that used to live here
-
-=back
+L<Package::Stash>
 
 =head1 SUPPORT
 
@@ -53,30 +46,23 @@ You can also look for information at:
 
 =over 4
 
-=item * AnnoCPAN: Annotated CPAN documentation
+=item * MetaCPAN
 
-L<http://annocpan.org/dist/Package-Stash-XS>
+L<https://metacpan.org/release/Package-Stash-XS>
 
-=item * CPAN Ratings
+=item * Github
 
-L<http://cpanratings.perl.org/d/Package-Stash-XS>
+L<https://github.com/doy/package-stash-xs>
 
 =item * RT: CPAN's request tracker
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Package-Stash-XS>
 
-=item * Search CPAN
+=item * CPAN Ratings
 
-L<http://search.cpan.org/dist/Package-Stash-XS>
+L<http://cpanratings.perl.org/d/Package-Stash-XS>
 
 =back
-
-=head1 AUTHOR
-
-Jesse Luehrs <doy at tozt dot net>
-
-Based on code from L<Class::MOP::Package>, by Stevan Little and the Moose
-Cabal.
 
 =begin Pod::Coverage
 
