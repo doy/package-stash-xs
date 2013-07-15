@@ -1,7 +1,7 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
-      - handle read magic properly in get_or_add_symbol
+      - handle magic more correctly in add_symbol and get_or_add_symbol
 
 0.26  2013-01-04
       - internal refactorings to support Package::Anon stashes - this should
