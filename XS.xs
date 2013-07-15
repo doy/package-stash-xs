@@ -372,15 +372,12 @@ static void _real_gv_init(GV *gv, HV *stash, SV *name)
     }
 }
 
-static void _expand_glob(SV *self, SV *varname, int lval)
+static void _expand_glob(SV *self, SV *varname, HE *entry, HV *namespace,
+                         int lval)
 {
-    HV *namespace;
-    HE *entry;
     GV *glob;
 
-    namespace = _get_namespace(self);
-
-    if (entry = hv_fetch_ent(namespace, varname, lval, 0)) {
+    if (entry) {
         glob = (GV*)HeVAL(entry);
         if (isGV(glob)) {
             croak("_expand_glob called on stash slot with expanded glob: %"SVf,
@@ -389,9 +386,10 @@ static void _expand_glob(SV *self, SV *varname, int lval)
         else {
             SvREFCNT_inc(glob);
             _real_gv_init(glob, namespace, varname);
-            if (!hv_store_ent(namespace, varname, (SV*)glob, 0)) {
-                croak("hv_store failed");
+            if (HeVAL(entry)) {
+                SvREFCNT_dec(HeVAL(entry));
             }
+            HeVAL(entry) = (SV*)glob;
         }
     }
     else {
@@ -421,24 +419,25 @@ static SV *_undef_for_type(vartype_t type)
     }
 }
 
-static void _add_symbol(SV *self, varspec_t variable, SV *initial)
+static void _add_symbol_entry(SV *self, varspec_t variable, SV *initial,
+                              HE *entry, HV *namespace)
 {
     GV *glob;
-    HV *namespace;
-    HE *entry;
     SV *val;
 
-    namespace = _get_namespace(self);
-    entry = hv_fetch_ent(namespace, variable.name, 0, 0);
-    if (entry) {
+    if (entry && isGV(HeVAL(entry))) {
         glob = (GV*)HeVAL(entry);
     }
-    else {
+    else if (entry) {
         glob = (GV*)newSV(0);
         _real_gv_init(glob, namespace, variable.name);
-        if (!hv_store_ent(namespace, variable.name, (SV*)glob, 0)) {
-            croak("hv_store failed");
+        if (HeVAL(entry)) {
+            SvREFCNT_dec(HeVAL(entry));
         }
+        HeVAL(entry) = (SV*)glob;
+    }
+    else {
+        croak("invalid entry passed to _add_symbol_entry");
     }
 
     if (!initial) {
@@ -474,6 +473,17 @@ static void _add_symbol(SV *self, varspec_t variable, SV *initial)
     }
 }
 
+static void _add_symbol(SV *self, varspec_t variable, SV *initial)
+{
+    HV *namespace;
+    HE *entry;
+
+    namespace = _get_namespace(self);
+    entry = hv_fetch_ent(namespace, variable.name, 1, 0);
+
+    _add_symbol_entry(self, variable, initial, entry, namespace);
+}
+
 static int _slot_exists(GV *glob, vartype_t type)
 {
     switch (type) {
@@ -505,16 +515,18 @@ static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
     GV *glob;
 
     namespace = _get_namespace(self);
-    entry = hv_fetch_ent(namespace, variable->name, vivify, 0);
+    entry = hv_fetch_ent(namespace, variable->name,
+                         vivify && !hv_exists_ent(namespace, variable->name, 0),
+                         0);
     if (!entry)
         return NULL;
 
     glob = (GV*)(HeVAL(entry));
     if (!isGV(glob))
-        _expand_glob(self, variable->name, vivify);
+        _expand_glob(self, variable->name, entry, namespace, vivify);
 
     if (vivify && !_slot_exists(glob, variable->type)) {
-        _add_symbol(self, *variable, NULL);
+        _add_symbol_entry(self, *variable, NULL, entry, namespace);
     }
 
     switch (variable->type) {
@@ -899,16 +911,18 @@ get_all_symbols(self, vartype=VAR_NONE)
     vartype_t vartype
   PREINIT:
     HV *namespace, *ret;
-    SV *val;
-    char *key;
-    I32 len;
+    HE *entry;
   PPCODE:
     namespace = _get_namespace(self);
     ret = newHV();
 
     hv_iterinit(namespace);
-    while ((val = hv_iternextsv(namespace, &key, &len))) {
-        GV *gv = (GV*)val;
+    while ((entry = hv_iternext(namespace))) {
+        GV *gv = (GV*)hv_iterval(namespace, entry);
+        char *key;
+        I32 len;
+
+        key = hv_iterkey(entry, &len);
 #if PERL_VERSION < 10
         if ((vartype == VAR_SCALAR || vartype == VAR_NONE)
             && strnEQ(key, "::ISA::CACHE::", len)) {
@@ -918,33 +932,33 @@ get_all_symbols(self, vartype=VAR_NONE)
 
         if (!isGV(gv)) {
             SV *keysv = newSVpvn(key, len);
-            _expand_glob(self, keysv, 0);
+            _expand_glob(self, keysv, entry, namespace, 0);
             SvREFCNT_dec(keysv);
         }
 
         switch (vartype) {
         case VAR_SCALAR:
-            if (GvSVOK(val))
+            if (GvSVOK(gv))
                 hv_store(ret, key, len, newRV_inc(GvSV(gv)), 0);
             break;
         case VAR_ARRAY:
-            if (GvAVOK(val))
+            if (GvAVOK(gv))
                 hv_store(ret, key, len, newRV_inc((SV*)GvAV(gv)), 0);
             break;
         case VAR_HASH:
-            if (GvHVOK(val))
+            if (GvHVOK(gv))
                 hv_store(ret, key, len, newRV_inc((SV*)GvHV(gv)), 0);
             break;
         case VAR_CODE:
-            if (GvCVOK(val))
+            if (GvCVOK(gv))
                 hv_store(ret, key, len, newRV_inc((SV*)GvCV(gv)), 0);
             break;
         case VAR_IO:
-            if (GvIOOK(val))
+            if (GvIOOK(gv))
                 hv_store(ret, key, len, newRV_inc((SV*)GvIO(gv)), 0);
             break;
         case VAR_NONE:
-            hv_store(ret, key, len, SvREFCNT_inc_simple_NN(val), 0);
+            hv_store(ret, key, len, SvREFCNT_inc_simple_NN((SV*)gv), 0);
             break;
         default:
             croak("Unknown variable type in get_all_symbols");
