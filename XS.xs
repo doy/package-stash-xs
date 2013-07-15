@@ -383,7 +383,8 @@ static void _expand_glob(SV *self, SV *varname)
     if (entry = hv_fetch_ent(namespace, varname, 0, 0)) {
         glob = (GV*)HeVAL(entry);
         if (isGV(glob)) {
-            croak("_expand_glob called on stash slot with expanded glob");
+            croak("_expand_glob called on stash slot with expanded glob: %"SVf,
+                  varname);
         }
         else {
             SvREFCNT_inc(glob);
