@@ -428,9 +428,6 @@ static void _add_symbol(SV *self, varspec_t variable, SV *initial)
     HE *entry;
     SV *val;
 
-    /* GV_ADDMULTI rather than GV_ADD because otherwise you get 'used only
-     * once' warnings in some situations... i can't reproduce this, but CMOP
-     * triggers it */
     namespace = _get_namespace(self);
     entry = hv_fetch_ent(namespace, variable.name, 0, 0);
     if (entry) {
