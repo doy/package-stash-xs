@@ -372,7 +372,7 @@ static void _real_gv_init(GV *gv, HV *stash, SV *name)
     }
 }
 
-static void _expand_glob(SV *self, SV *varname)
+static void _expand_glob(SV *self, SV *varname, int lval)
 {
     HV *namespace;
     HE *entry;
@@ -380,7 +380,7 @@ static void _expand_glob(SV *self, SV *varname)
 
     namespace = _get_namespace(self);
 
-    if (entry = hv_fetch_ent(namespace, varname, 0, 0)) {
+    if (entry = hv_fetch_ent(namespace, varname, lval, 0)) {
         glob = (GV*)HeVAL(entry);
         if (isGV(glob)) {
             croak("_expand_glob called on stash slot with expanded glob: %"SVf,
@@ -514,7 +514,7 @@ static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
 
     glob = (GV*)(HeVAL(entry));
     if (!isGV(glob))
-        _expand_glob(self, variable->name);
+        _expand_glob(self, variable->name, vivify);
 
     if (vivify && !_slot_exists(glob, variable->type)) {
         _add_symbol(self, *variable, NULL);
@@ -921,7 +921,7 @@ get_all_symbols(self, vartype=VAR_NONE)
 
         if (!isGV(gv)) {
             SV *keysv = newSVpvn(key, len);
-            _expand_glob(self, keysv);
+            _expand_glob(self, keysv, 0);
             SvREFCNT_dec(keysv);
         }
 
