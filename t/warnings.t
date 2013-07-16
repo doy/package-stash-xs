@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Test::More;
 
-use Package::Stash;
+use Package::Stash::XS;
 
 my $warnings;
 BEGIN {
@@ -12,7 +12,7 @@ BEGIN {
 }
 
 BEGIN {
-    my $stash = Package::Stash->new('Foo');
+    my $stash = Package::Stash::XS->new('Foo');
     $stash->get_or_add_symbol('$bar');
 }
 
