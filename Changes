@@ -1,6 +1,8 @@
 Revision history for Package-Stash-XS
 
 {{$NEXT}}
+
+0.28  2013-07-16
       - fix test issue (Graham Knop)
 
 0.27  2013-07-15
