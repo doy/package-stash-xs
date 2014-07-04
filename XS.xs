@@ -157,24 +157,6 @@ static const char *vartype_to_string(vartype_t type)
     }
 }
 
-static I32 vartype_to_svtype(vartype_t type)
-{
-    switch (type) {
-    case VAR_SCALAR:
-        return SVt_PV; /* or whatever */
-    case VAR_ARRAY:
-        return SVt_PVAV;
-    case VAR_HASH:
-        return SVt_PVHV;
-    case VAR_CODE:
-        return SVt_PVCV;
-    case VAR_IO:
-        return SVt_PVIO;
-    default:
-        return SVt_NULL;
-    }
-}
-
 static vartype_t string_to_vartype(char *vartype)
 {
     if (strEQ(vartype, "SCALAR")) {
