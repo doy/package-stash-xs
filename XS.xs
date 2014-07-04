@@ -598,7 +598,7 @@ name(self)
   CODE:
     if (!sv_isobject(self))
         croak("Can't call name as a class method");
-    if (slot = hv_fetch_ent((HV*)SvRV(self), name_key, 0, name_hash)) {
+    if ((slot = hv_fetch_ent((HV*)SvRV(self), name_key, 0, name_hash))) {
         RETVAL = SvREFCNT_inc_simple_NN(HeVAL(slot));
     }
     else {
