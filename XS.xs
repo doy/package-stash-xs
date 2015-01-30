@@ -192,7 +192,6 @@ static int _is_valid_module_name(SV *package)
     sv_upgrade(sv, SVt_PV);
     SvREADONLY_on(sv);
     SvLEN(sv) = 0;
-    SvUTF8_on(sv);
     SvPVX(sv) = buf;
     SvCUR_set(sv, len);
     SvPOK_on(sv);
@@ -956,6 +955,7 @@ BOOT:
         PMOP fakepmop;
 
         fakepmop.op_pmflags = 0;
+        fakepmop.op_pmdynflags = 0;
         valid_module_regex = pregcomp(vmre, vmre + strlen(vmre), &fakepmop);
 #else
         SV *re;
