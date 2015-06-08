@@ -951,7 +951,12 @@ get_all_symbols(self, vartype=VAR_NONE)
 
 BOOT:
     {
-        const char *vmre = "\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\z";
+      /* Get the regex from $Module::Runtime::module_name_rx instead.
+         Then users can patch this overly strict definition by themselves, e.g.
+         allowing unicode or trailing ? */
+        SV *const mn = get_sv("Module::Runtime::module_name_rx", 0);
+        const char *vmre = mn ? SvPVX(mn)
+            : "\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\??\\z";
 #if (PERL_VERSION < 9) || ((PERL_VERSION == 9) && (PERL_SUBVERSION < 5))
         PMOP fakepmop;
 

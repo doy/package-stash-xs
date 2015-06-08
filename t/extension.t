@@ -73,4 +73,18 @@ is(exception {
 
 ok(!defined($Foo::{baz}), '... the %baz slot has still not been created');
 
+{
+    no strict;
+    if (eval "require Module::Runtime;") {
+        Module::Runtime->import('$module_name_rx');
+        $module_name_rx = "\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\??\\z";
+        diag $module_name_rx if 0;
+    } else {
+        $Module::Runtime::module_name_rx = "\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\??\\z";
+        diag $Module::Runtime::module_name_rx if 0;
+    }
+    $x = eval { Package::Stash->new('int?'); };
+    ok (!$@ && $x, "extend \$Module::Runtime::module_name_rx");
+}
+
 done_testing;
