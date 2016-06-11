@@ -354,7 +354,7 @@ static void _real_gv_init(GV *gv, HV *stash, SV *name)
     }
 }
 
-static void _expand_glob(SV *self, SV *varname, HE *entry, HV *namespace,
+static void _expand_glob(SV *self, SV *varname, HE *entry, HV *stash,
                          int lval)
 {
     GV *glob;
@@ -367,7 +367,7 @@ static void _expand_glob(SV *self, SV *varname, HE *entry, HV *namespace,
         }
         else {
             SvREFCNT_inc(glob);
-            _real_gv_init(glob, namespace, varname);
+            _real_gv_init(glob, stash, varname);
             if (HeVAL(entry)) {
                 SvREFCNT_dec(HeVAL(entry));
             }
@@ -402,7 +402,7 @@ static SV *_undef_for_type(vartype_t type)
 }
 
 static void _add_symbol_entry(SV *self, varspec_t variable, SV *initial,
-                              HE *entry, HV *namespace)
+                              HE *entry, HV *stash)
 {
     GV *glob;
     SV *val;
@@ -412,7 +412,7 @@ static void _add_symbol_entry(SV *self, varspec_t variable, SV *initial,
     }
     else if (entry) {
         glob = (GV*)newSV(0);
-        _real_gv_init(glob, namespace, variable.name);
+        _real_gv_init(glob, stash, variable.name);
         if (HeVAL(entry)) {
             SvREFCNT_dec(HeVAL(entry));
         }
@@ -457,13 +457,13 @@ static void _add_symbol_entry(SV *self, varspec_t variable, SV *initial,
 
 static void _add_symbol(SV *self, varspec_t variable, SV *initial)
 {
-    HV *namespace;
+    HV *stash;
     HE *entry;
 
-    namespace = _get_namespace(self);
-    entry = hv_fetch_ent(namespace, variable.name, 1, 0);
+    stash = _get_namespace(self);
+    entry = hv_fetch_ent(stash, variable.name, 1, 0);
 
-    _add_symbol_entry(self, variable, initial, entry, namespace);
+    _add_symbol_entry(self, variable, initial, entry, stash);
 }
 
 static int _slot_exists(GV *glob, vartype_t type)
@@ -492,23 +492,23 @@ static int _slot_exists(GV *glob, vartype_t type)
 
 static SV *_get_symbol(SV *self, varspec_t *variable, int vivify)
 {
-    HV *namespace;
+    HV *stash;
     HE *entry;
     GV *glob;
 
-    namespace = _get_namespace(self);
-    entry = hv_fetch_ent(namespace, variable->name,
-                         vivify && !hv_exists_ent(namespace, variable->name, 0),
+    stash = _get_namespace(self);
+    entry = hv_fetch_ent(stash, variable->name,
+                         vivify && !hv_exists_ent(stash, variable->name, 0),
                          0);
     if (!entry)
         return NULL;
 
     glob = (GV*)(HeVAL(entry));
     if (!isGV(glob))
-        _expand_glob(self, variable->name, entry, namespace, vivify);
+        _expand_glob(self, variable->name, entry, stash, vivify);
 
     if (vivify && !_slot_exists(glob, variable->type)) {
-        _add_symbol_entry(self, *variable, NULL, entry, namespace);
+        _add_symbol_entry(self, *variable, NULL, entry, stash);
     }
 
     switch (variable->type) {
@@ -607,12 +607,12 @@ namespace(self)
         RETVAL = SvREFCNT_inc_simple_NN(HeVAL(slot));
     }
     else {
-        HV *namespace;
+        HV *stash;
         SV *nsref;
 
         package_name = _get_name(self);
-        namespace = gv_stashpv(SvPV_nolen(package_name), GV_ADD);
-        nsref = newRV_inc((SV*)namespace);
+        stash = gv_stashpv(SvPV_nolen(package_name), GV_ADD);
+        nsref = newRV_inc((SV*)stash);
         sv_rvweaken(nsref);
         if (!hv_store((HV*)SvRV(self), "namespace", 9, nsref, 0)) {
             SvREFCNT_dec(nsref);
@@ -705,12 +705,12 @@ has_symbol(self, variable)
     SV *self
     varspec_t variable
   PREINIT:
-    HV *namespace;
+    HV *stash;
     HE *entry;
     SV *val;
   CODE:
-    namespace = _get_namespace(self);
-    entry = hv_fetch_ent(namespace, variable.name, 0, 0);
+    stash = _get_namespace(self);
+    entry = hv_fetch_ent(stash, variable.name, 0, 0);
     if (!entry)
         XSRETURN_UNDEF;
 
@@ -776,12 +776,12 @@ remove_symbol(self, variable)
     SV *self
     varspec_t variable
   PREINIT:
-    HV *namespace;
+    HV *stash;
     HE *entry;
     SV *val;
   CODE:
-    namespace = _get_namespace(self);
-    entry = hv_fetch_ent(namespace, variable.name, 0, 0);
+    stash = _get_namespace(self);
+    entry = hv_fetch_ent(stash, variable.name, 0, 0);
     if (!entry)
         XSRETURN_EMPTY;
 
@@ -811,7 +811,7 @@ remove_symbol(self, variable)
     }
     else {
         if (variable.type == VAR_CODE) {
-            hv_delete_ent(namespace, variable.name, G_DISCARD, 0);
+            hv_delete_ent(stash, variable.name, G_DISCARD, 0);
         }
     }
 
@@ -821,14 +821,14 @@ list_all_symbols(self, vartype=VAR_NONE)
     vartype_t vartype
   PPCODE:
     if (vartype == VAR_NONE) {
-        HV *namespace;
+        HV *stash;
         HE *entry;
         int keys;
 
-        namespace = _get_namespace(self);
-        keys = hv_iterinit(namespace);
+        stash = _get_namespace(self);
+        keys = hv_iterinit(stash);
         EXTEND(SP, keys);
-        while ((entry = hv_iternext(namespace))) {
+        while ((entry = hv_iternext(stash))) {
 #if PERL_VERSION < 10
             char *pv;
             STRLEN len;
@@ -841,14 +841,14 @@ list_all_symbols(self, vartype=VAR_NONE)
         }
     }
     else {
-        HV *namespace;
+        HV *stash;
         SV *val;
         char *key;
         I32 len;
 
-        namespace = _get_namespace(self);
-        hv_iterinit(namespace);
-        while ((val = hv_iternextsv(namespace, &key, &len))) {
+        stash = _get_namespace(self);
+        hv_iterinit(stash);
+        while ((val = hv_iternextsv(stash, &key, &len))) {
             GV *gv = (GV*)val;
 #if PERL_VERSION < 10
             if (vartype == VAR_SCALAR && strnEQ(key, "::ISA::CACHE::", len)) {
@@ -892,15 +892,15 @@ get_all_symbols(self, vartype=VAR_NONE)
     SV *self
     vartype_t vartype
   PREINIT:
-    HV *namespace, *ret;
+    HV *stash, *ret;
     HE *entry;
   PPCODE:
-    namespace = _get_namespace(self);
+    stash = _get_namespace(self);
     ret = newHV();
 
-    hv_iterinit(namespace);
-    while ((entry = hv_iternext(namespace))) {
-        GV *gv = (GV*)hv_iterval(namespace, entry);
+    hv_iterinit(stash);
+    while ((entry = hv_iternext(stash))) {
+        GV *gv = (GV*)hv_iterval(stash, entry);
         char *key;
         I32 len;
 
@@ -914,7 +914,7 @@ get_all_symbols(self, vartype=VAR_NONE)
 
         if (!isGV(gv)) {
             SV *keysv = newSVpvn(key, len);
-            _expand_glob(self, keysv, entry, namespace, 0);
+            _expand_glob(self, keysv, entry, stash, 0);
             SvREFCNT_dec(keysv);
         }
 
@@ -951,7 +951,12 @@ get_all_symbols(self, vartype=VAR_NONE)
 
 BOOT:
     {
-        const char *vmre = "\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\z";
+      /* Get the regex from $Module::Runtime::module_name_rx instead.
+         Then users can patch this overly strict definition by themselves, e.g.
+         allowing unicode or trailing ? */
+        SV *const mn = get_sv("Module::Runtime::module_name_rx", 0);
+        const char *vmre = mn ? SvPVX(mn)
+            : "\\A[0-9A-Z_a-z]+(?:::[0-9A-Z_a-z]+)*\\??\\z";
 #if (PERL_VERSION < 9) || ((PERL_VERSION == 9) && (PERL_SUBVERSION < 5))
         PMOP fakepmop;
 
