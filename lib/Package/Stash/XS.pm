@@ -51,7 +51,7 @@ L<https://metacpan.org/release/Package-Stash-XS>
 
 =item * Github
 
-L<https://github.com/doy/package-stash-xs>
+L<https://github.com/moose/Package-Stash-XS>
 
 =item * RT: CPAN's request tracker
 
