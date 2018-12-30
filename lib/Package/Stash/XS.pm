@@ -4,6 +4,8 @@ use warnings;
 use 5.008001;
 # ABSTRACT: faster and more correct implementation of the Package::Stash API
 
+our $VERSION = '0.29';
+
 use XSLoader;
 XSLoader::load(
     __PACKAGE__,
@@ -28,9 +30,6 @@ installed, and should be preferred in all environments with a compiler.
 =head1 BUGS
 
 No known bugs (but see the BUGS section in L<Package::Stash>).
-
-Please report any bugs to GitHub Issues at
-L<https://github.com/doy/package-stash-xs/issues>.
 
 =head1 SEE ALSO
 
