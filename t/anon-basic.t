@@ -5,11 +5,7 @@ use lib 't/lib';
 use Test::More;
 use Test::Fatal;
 
-BEGIN {
-    if (!eval { require Package::Anon; 1 }) {
-        plan skip_all => "Package::Anon is required for this test";
-    }
-}
+use Test::Requires 'Package::Anon';
 use Package::Stash;
 use Symbol;
 
