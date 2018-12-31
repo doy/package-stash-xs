@@ -80,5 +80,3 @@ remove_symbol
 =end Pod::Coverage
 
 =cut
-
-1;
