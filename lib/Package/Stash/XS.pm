@@ -4,7 +4,7 @@ use warnings;
 use 5.008001;
 # ABSTRACT: faster and more correct implementation of the Package::Stash API
 
-our $VERSION = '0.29';
+our $VERSION = '0.30';
 
 use XSLoader;
 XSLoader::load(

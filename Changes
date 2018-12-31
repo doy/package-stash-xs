@@ -1,5 +1,7 @@
 Revision history for Package-Stash-XS
 
+{{$NEXT}}
+
 0.29      2018-12-31 03:26:01Z
       - quiet compiler warning (Jacques Germishuys, PR #2)
       - canonical repository moved to
