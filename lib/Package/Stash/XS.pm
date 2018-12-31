@@ -27,34 +27,6 @@ No known bugs (but see the BUGS section in L<Package::Stash>).
 
 L<Package::Stash>
 
-=head1 SUPPORT
-
-You can find this documentation for this module with the perldoc command.
-
-    perldoc Package::Stash::XS
-
-You can also look for information at:
-
-=over 4
-
-=item * MetaCPAN
-
-L<https://metacpan.org/release/Package-Stash-XS>
-
-=item * Github
-
-L<https://github.com/moose/Package-Stash-XS>
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Package-Stash-XS>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/Package-Stash-XS>
-
-=back
-
 =begin Pod::Coverage
 
 add_symbol
