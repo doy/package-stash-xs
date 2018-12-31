@@ -7,15 +7,7 @@ use 5.008001;
 our $VERSION = '0.30';
 
 use XSLoader;
-XSLoader::load(
-    __PACKAGE__,
-    # we need to be careful not to touch $VERSION at compile time, otherwise
-    # DynaLoader will assume it's set and check against it, which will cause
-    # fail when being run in the checkout without dzil having set the actual
-    # $VERSION
-    exists $Package::Stash::XS::{VERSION}
-        ? ${ $Package::Stash::XS::{VERSION} } : (),
-);
+XSLoader::load(__PACKAGE__, $VERSION);
 
 =head1 SYNOPSIS
 
