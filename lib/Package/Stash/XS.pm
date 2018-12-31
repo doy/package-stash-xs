@@ -2,7 +2,7 @@ package Package::Stash::XS;
 use strict;
 use warnings;
 use 5.008001;
-# ABSTRACT: faster and more correct implementation of the Package::Stash API
+# ABSTRACT: Faster and more correct implementation of the Package::Stash API
 
 our $VERSION = '0.30';
 
