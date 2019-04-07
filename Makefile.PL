@@ -9,4 +9,8 @@ use ExtUtils::MakeMaker::Dist::Zilla::Develop;
 
 WriteMakefile(
     NAME => 'Package::Stash::XS',
+    VERSION_FROM => 'lib/Package/Stash/XS.pm',
+    INSTALLMAN1DIR => 'none',
+    INSTALLMAN3DIR => 'none',
+    NORECURS => 1,
 );

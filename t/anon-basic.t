@@ -1,15 +1,10 @@
-#!/usr/bin/env perl
 use strict;
 use warnings;
 use lib 't/lib';
 use Test::More;
 use Test::Fatal;
 
-BEGIN {
-    if (!eval { require Package::Anon; 1 }) {
-        plan skip_all => "Package::Anon is required for this test";
-    }
-}
+use Test::Needs 'Package::Anon';
 use Package::Stash;
 use Symbol;
 

@@ -2,18 +2,12 @@ package Package::Stash::XS;
 use strict;
 use warnings;
 use 5.008001;
-# ABSTRACT: faster and more correct implementation of the Package::Stash API
+# ABSTRACT: Faster and more correct implementation of the Package::Stash API
+
+our $VERSION = '0.30';
 
 use XSLoader;
-XSLoader::load(
-    __PACKAGE__,
-    # we need to be careful not to touch $VERSION at compile time, otherwise
-    # DynaLoader will assume it's set and check against it, which will cause
-    # fail when being run in the checkout without dzil having set the actual
-    # $VERSION
-    exists $Package::Stash::XS::{VERSION}
-        ? ${ $Package::Stash::XS::{VERSION} } : (),
-);
+XSLoader::load(__PACKAGE__, $VERSION);
 
 =head1 SYNOPSIS
 
@@ -29,40 +23,9 @@ installed, and should be preferred in all environments with a compiler.
 
 No known bugs (but see the BUGS section in L<Package::Stash>).
 
-Please report any bugs to GitHub Issues at
-L<https://github.com/doy/package-stash-xs/issues>.
-
 =head1 SEE ALSO
 
 L<Package::Stash>
-
-=head1 SUPPORT
-
-You can find this documentation for this module with the perldoc command.
-
-    perldoc Package::Stash::XS
-
-You can also look for information at:
-
-=over 4
-
-=item * MetaCPAN
-
-L<https://metacpan.org/release/Package-Stash-XS>
-
-=item * Github
-
-L<https://github.com/doy/package-stash-xs>
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Package-Stash-XS>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/Package-Stash-XS>
-
-=back
 
 =begin Pod::Coverage
 
@@ -81,5 +44,3 @@ remove_symbol
 =end Pod::Coverage
 
 =cut
-
-1;
